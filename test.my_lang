@@ -1,6 +1,7 @@
 // Приклад програми мовою Lead
 // Демонстрація всіх токенів, типів і операторів
 
+
 /* Глобальні оголошення змінних з
     усіма типами */
 var a, b, c: int = 0
@@ -71,7 +72,7 @@ for (var i: int = 0; i < 3; i = i + 1) {
 int powRes = pow(2, 4)
 
 //функція
-func pow(int a, int b){
+func pow(int a, int b) => int {
     int result = a ** b
     return result
 }

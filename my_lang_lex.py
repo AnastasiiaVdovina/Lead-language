@@ -357,8 +357,60 @@ def indexIdConst(state,lexeme):
 lex()
 
 # Таблиці: розбору, ідентифікаторів та констант
-print('-'*100)
-print('tableOfSymb:{0}'.format(tableOfSymb))
-print('tableOfId:{0}'.format(tableOfId))
-print('tableOfConst:{0}'.format(tableOfConst))
+# print('-'*100)
+# print('tableOfSymb:{0}'.format(tableOfSymb))
+# print('tableOfId:{0}'.format(tableOfId))
+# print('tableOfConst:{0}'.format(tableOfConst))
 
+print('-' * 100)
+print('--- Таблиці лексичного аналізу ---')
+
+
+def format_table_of_symb_tabular(symb_table):
+    # Заголовки стовпців
+    header = f"| {'Line':<10} | {'Lexeme':<35} | {'Token':<15} | {'Index':<5}"
+    separator = "-" * len(header)
+
+    output = f"{header}\n{separator}\n"
+
+    for k, v in symb_table.items():
+        line, lexeme, token, index = v
+        index_str = str(index) if index != '' else ''
+        row = f"| {str(line):<10} | {lexeme:<35} | {token:<15} | {index_str:<5}"
+        output += f"{row}\n"
+
+    return output
+
+
+def format_id_const_tabular(data_table, name):
+
+    if name == 'tableOfId':
+        header = f"| {'Identifier':<15} | {'Index':<5}"
+    else:  # tableOfConst
+        header = f"| {'Constant':<15} | {'Type':<10} | {'Index':<5}"
+
+    separator = "-" * len(header)
+    output = f"\n{name}:\n{header}\n{separator}\n"
+
+    k_list = list(data_table.keys())
+
+    for k in k_list:
+        v = data_table[k]
+
+        if name == 'tableOfId':
+            row = f"| {k:<15} | {v:<5}"  # # = Index
+        else:
+            # v = (type, index)
+            c_type, c_index = v
+            row = f"| {k:<15} | {c_type:<10} | {c_index:<5}"
+
+        output += f"{row}\n"
+
+    return output
+
+
+
+print("\nТаблиця символів (tableOfSymb):")
+print(format_table_of_symb_tabular(tableOfSymb))
+print(format_id_const_tabular(tableOfId, 'tableOfId'))
+print(format_id_const_tabular(tableOfConst, 'tableOfConst'))
