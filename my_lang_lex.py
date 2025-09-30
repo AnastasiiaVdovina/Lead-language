@@ -14,7 +14,8 @@ tokenTable = {
     'var': 'keyword', 'let': 'keyword',
 
     # функції
-    'func': 'keyword', 'keyword': 'keyword', '=>': 'keyword',
+    'func': 'keyword', 'return': 'keyword', '=>': 'keyword',
+    #func pow(int a, int b) => int{}
 
     # оператори присвоєння зі скороченням
     '+=': 'add_ass_op', '-=': 'add_ass_op',

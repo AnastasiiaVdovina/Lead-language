@@ -8,6 +8,7 @@ var pi: float = 3.14
 var ok: bool = true
 var name: string = "Lead language"
 
+//константа
 let a: float = 3.14
 
 /* Арифметика і логічні операції */
@@ -64,6 +65,15 @@ repeat {
 /* Цикл for */
 for (var i: int = 0; i < 3; i = i + 1) {
     print("For loop i=\(i)")
+}
+
+//виклик функції
+int powRes = pow(2, 4)
+
+//функція
+func pow(int a, int b){
+    int result = a ** b
+    return result
 }
 
 /* Кінець програми */
