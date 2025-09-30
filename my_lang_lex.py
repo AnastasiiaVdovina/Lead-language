@@ -140,11 +140,11 @@ def lex():
         if char=="\n":
             numLine+=1
         lexeme+=char	# якщо стан НЕ закл. і не стартовий - додати символ до лексеми
-    print('Lexer: Лексичний аналіз завершено успішно')
+    print('Lexer: Lexical analysis completed successfully')
     FSuccess = ('Lexer', True)
   except SystemExit as e:
     # Повідомити про факт виявлення помилки
-    print('Lexer: Аварійне завершення програми з кодом {0}'.format(e))
+    print('Lexer: Program terminated with code {0}'.format(e))
 
 def processing():
     global state, lexeme, char, numLine, numChar, tableOfSymb
@@ -258,13 +258,13 @@ def fail():
   global state,numLine,char
   print(numLine)
   if state == 7:
-    print(f'Lexer: у рядку {numLine} неочікуваний символ "{char}"')
+    print(f'ERROR 7: in line {numLine}  unexpected character  was met -> "{char}"')
     exit(7)
   if state == 9:
-    print(f'Lexer: у рядку {numLine} очікувався символ "&&" або "||", а не "{char}"')
+    print(f'ERROR 9: unexpected character  was met -> "{char}" in line {numLine}. SUGGESTED CORRECTION: might be symbols || or &&')
     exit(9)
   if state == 21:
-    print(f'Lexer: у рядку {numLine} неочікуваний символ "{char}"')
+    print(f'ERROR 21: unexpected character  was met -> "{char}" in line {numLine}. Multiline strings are not allowed. ')
     exit(21)
   
   
@@ -364,7 +364,7 @@ lex()
 # print('tableOfConst:{0}'.format(tableOfConst))
 
 print('-' * 100)
-print('--- Таблиці лексичного аналізу ---')
+print('--- Lexical analysis tables ---')
 
 
 def format_table_of_symb_tabular(symb_table):
@@ -411,7 +411,7 @@ def format_id_const_tabular(data_table, name):
 
 
 
-print("\nТаблиця символів (tableOfSymb):")
+print("\ntableOfSymb:")
 print(format_table_of_symb_tabular(tableOfSymb))
 print(format_id_const_tabular(tableOfId, 'tableOfId'))
 print(format_id_const_tabular(tableOfConst, 'tableOfConst'))
