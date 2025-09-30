@@ -1,0 +1,4 @@
+func pow(int a) => int {
+    int ¿ = 5a
+    return ¿
+}
