@@ -261,7 +261,7 @@ def fail():
     print(f'Lexer: у рядку {numLine} неочікуваний символ "{char}"')
     exit(7)
   if state == 9:
-    print(f'Lexer: у рядку {numLine} неочікуваний символ "{char}"')
+    print(f'Lexer: у рядку {numLine} очікувався символ "&&" або "||", а не "{char}"')
     exit(9)
   if state == 21:
     print(f'Lexer: у рядку {numLine} неочікуваний символ "{char}"')
