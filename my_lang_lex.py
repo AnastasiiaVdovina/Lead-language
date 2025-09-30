@@ -120,7 +120,7 @@ FSuccess = ('Lexer', False)
 
 lenCode=len(sourceCode)-1       # номер останнього символа у файлі з кодом програми
 numLine=1                       # лексичний аналіз починаємо з першого рядка
-numChar=-1                      # з першого символа (в Python'і нумерація - з 0)
+numChar=-1                      # з першого символа (в Python нумерація - з 0)
 char=''                         # ще не брали жодного символа
 lexeme=''                       # ще не починали розпізнавати лексеми
 
@@ -213,7 +213,7 @@ def processing():
         tableOfSymb[len(tableOfSymb) + 1] = (numLine, lexeme.strip(), token, '')
         lexeme = ''
         state = initState
-        numLine += 1  # підвищуємо рядок саме тут
+        numLine += 1
         return
 
 
@@ -261,10 +261,10 @@ def fail():
     print(f'Lexer: у рядку {numLine} неочікуваний символ "{char}"')
     exit(7)
   if state == 9:
-    print(f'Lexer: у рядку {numLine} неочікуваний символ "{char}"')
+    print(f'Lexer: у рядку {numLine} очікувався символ "| або &", а не "{char}"')
     exit(9)
   if state == 21:
-    print(f'Lexer: у рядку {numLine} неочікуваний символ "{char}"')
+    print(f'Lexer: у рядку {numLine} очікувався символ ">", а не "{char}"')
     exit(21)
   
   
