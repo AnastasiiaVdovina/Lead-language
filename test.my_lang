@@ -1,0 +1,69 @@
+// Приклад програми мовою Lead
+// Демонстрація всіх токенів, типів і операторів
+
+/* Глобальні оголошення змінних з
+    усіма типами */
+var a, b, c: int = 0
+var pi: float = 3.14
+var ok: bool = true
+var name: string = "Lead language"
+
+let a: float = 3.14
+
+/* Арифметика і логічні операції */
+a = 5 + 3 * 2 - 1
+pi = pi / 2.0 ** 3
+ok = !false && true || false
+b += 10
+c -= 2
+a *= 2
+b /= 2
+
+/* Введення даних */
+print("Enter integer: ")
+a = input()
+print("Enter float: ")
+pi = input()
+
+/* Умовний оператор if-else */
+if (a > 0) {
+    print("Positive")
+} else if (a == 0) {
+    print("Zero")
+} else {
+    print("Negative")
+}
+
+/* Оператор guard */
+guard (ok) else {
+    print("Access denied")
+}
+
+/* Оператор switch */
+switch a {
+    case 1:
+        print("One")
+    case 2:
+        print("Two")
+    default:
+        print("Other")
+}
+
+/* Цикл while */
+while (a < 5) {
+    print("While loop, a=\(a)")
+    a = a + 1
+}
+
+/* Цикл repeat-while */
+repeat {
+    print("Repeat loop, a=\(a)")
+    a = a - 1
+} while (a > 0)
+
+/* Цикл for */
+for (var i: int = 0; i < 3; i = i + 1) {
+    print("For loop i=\(i)")
+}
+
+/* Кінець програми */
