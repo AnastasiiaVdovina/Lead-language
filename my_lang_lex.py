@@ -111,7 +111,7 @@ tableOfSymb={}  # Таблиця символів програми (таблиц
 
 state=initState # поточний стан
 
-f = open('test2.my_lang', 'r', encoding="utf-8")
+f = open('test.my_lang', 'r', encoding="utf-8")
 sourceCode=f.read()
 f.close()
 
@@ -140,11 +140,11 @@ def lex():
         if char=="\n":
             numLine+=1
         lexeme+=char	# якщо стан НЕ закл. і не стартовий - додати символ до лексеми
-    print('Lexer: Lexical analysis completed successfully')
+    print('Lexer: Лексичний аналіз завершено успішно')
     FSuccess = ('Lexer', True)
   except SystemExit as e:
     # Повідомити про факт виявлення помилки
-    print('Lexer: Program terminated with code {0}'.format(e))
+    print('Lexer: Аварійне завершення програми з кодом {0}'.format(e))
 
 def processing():
     global state, lexeme, char, numLine, numChar, tableOfSymb
@@ -258,13 +258,13 @@ def fail():
   global state,numLine,char
   print(numLine)
   if state == 7:
-    print(f'ERROR 7: in line {numLine} unexpected character  was met -> "{char}"')
+    print(f'Lexer: у рядку {numLine} неочікуваний символ "{char}"')
     exit(7)
   if state == 9:
-    print(f'ERROR 9: unexpected character  was met -> "{char}" in line{numLine}. This symbol cannot consists of one character. SUGGESTED CORRECTION: || or &&.')
+    print(f'Lexer: у рядку {numLine} очікувався символ "&&" або "||", а не "{char}"')
     exit(9)
   if state == 21:
-    print(f'ERROR 21: unexpected character  was met -> "{char}" in line{numLine}. Multiline strings are not allowed. ')
+    print(f'Lexer: у рядку {numLine} неочікуваний символ "{char}"')
     exit(21)
   
   
@@ -411,7 +411,7 @@ def format_id_const_tabular(data_table, name):
 
 
 
-print("\ntableOfSymb:")
+print("\nТаблиця символів (tableOfSymb):")
 print(format_table_of_symb_tabular(tableOfSymb))
 print(format_id_const_tabular(tableOfId, 'tableOfId'))
 print(format_id_const_tabular(tableOfConst, 'tableOfConst'))
