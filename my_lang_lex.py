@@ -356,6 +356,7 @@ def indexIdConst(state,lexeme):
 # запуск лексичного аналізатора	
 lex()
 
+
 # Таблиці: розбору, ідентифікаторів та констант
 # print('-'*100)
 # print('tableOfSymb:{0}'.format(tableOfSymb))
