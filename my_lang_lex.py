@@ -106,7 +106,6 @@ tableOfId={}   # Таблиця ідентифікаторів
 tableOfConst={} # Таблиця констант
 tableOfSymb={}  # Таблиця символів програми (таблиця розбору)
 
-
 state=initState # поточний стан
 
 f = open('test.my_lang', 'r', encoding="utf-8")
