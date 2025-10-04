@@ -210,7 +210,7 @@ def processing():
     if state == 31:  # кінець однорядкового коментаря
         token = getToken(state, lexeme.strip())
         print(f"{numLine:<3d} {lexeme.strip():<10s} {token:<10s}")
-        tableOfSymb[len(tableOfSymb) + 1] = (numLine, lexeme.strip(), token, '')
+        tableOfSymb[len(tableOfSymb) + 1] = (numLine, "//", token, '')
         lexeme = ''
         state = initState
         numLine += 1  # підвищуємо рядок саме тут
@@ -222,7 +222,7 @@ def processing():
         lexeme += char  # додати останні символи (*/)
         token = getToken(state, lexeme.strip())
         print(f"{numLine:<3d} {lexeme.strip():<10s} {token:<10s}")
-        tableOfSymb[len(tableOfSymb) + 1] = (numLine, lexeme.strip(), token, '')
+        tableOfSymb[len(tableOfSymb) + 1] = (numLine, '/* */', token, '')
         lexeme = ''
         state = initState
         return
