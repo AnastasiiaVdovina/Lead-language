@@ -209,8 +209,15 @@ def processing():
     # --- коментарі однорядкові ---
     if state == 31:  # кінець однорядкового коментаря
         token = getToken(state, lexeme.strip())
+        marker = ''
+        if token == 'comment':
+            for key, val in tokenTable.items():
+                if val == 'comment' and lexeme.strip().startswith(key):
+                    marker = key
+                    break
+
         print(f"{numLine:<3d} {lexeme.strip():<10s} {token:<10s}")
-        tableOfSymb[len(tableOfSymb) + 1] = (numLine, "//", token, '')
+        tableOfSymb[len(tableOfSymb) + 1] = (numLine, marker, token, '')
         lexeme = ''
         state = initState
         numLine += 1  # підвищуємо рядок саме тут
@@ -220,9 +227,16 @@ def processing():
     # --- кінець блочного коментаря ---
     if state == 29:  # фінальний стан для блочного коментаря
         lexeme += char  # додати останні символи (*/)
-        token = getToken(state, lexeme.strip())
+        token = getToken(state, lexeme)
+        marker = ''
+        if token == 'comment':
+            for key, val in tokenTable.items():
+                if val == 'comment' and lexeme.strip().startswith(key):
+                    marker = key
+                    break
+
         print(f"{numLine:<3d} {lexeme.strip():<10s} {token:<10s}")
-        tableOfSymb[len(tableOfSymb) + 1] = (numLine, '/* */', token, '')
+        tableOfSymb[len(tableOfSymb) + 1] = (numLine, marker + marker[::-1], token, '')
         lexeme = ''
         state = initState
         return
