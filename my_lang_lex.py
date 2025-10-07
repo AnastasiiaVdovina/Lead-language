@@ -195,8 +195,14 @@ def processing():
     # --- рядкові константи ---
     if state == 20:
         token = getToken(state, lexeme)
+        marker = ''
+        if token == 'str':
+            for key, val in tokenTable.items():
+                if val == 'quote' and lexeme.strip().startswith(key):
+                    marker = key
+                    break
         index = indexIdConst(state, lexeme)
-        print(f"{numLine:<3d} {lexeme:<10s} {token:<10s} {index:<5d}")
+        print(f"{numLine:<3d} {marker + ' ' + marker:<10s} {token:<10s} {index:<5d}")
         tableOfSymb[len(tableOfSymb)+1] = (numLine, lexeme[1:], token, index)
         lexeme = ''
         state = initState
