@@ -202,6 +202,7 @@ def processing():
         state = initState
         return
 
+
     # --- коментарі однорядкові ---
     if state == 31:  # кінець однорядкового коментаря
         token = getToken(state, lexeme.strip())
