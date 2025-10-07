@@ -202,8 +202,8 @@ def processing():
                     marker = key
                     break
         index = indexIdConst(state, lexeme)
-        print(f"{numLine:<3d} {marker + ' ' + marker:<10s} {token:<10s} {index:<5d}")
-        tableOfSymb[len(tableOfSymb)+1] = (numLine, lexeme[1:], token, index)
+        print(f"{numLine:<3d} {lexeme+'"':<10s} {token:<10s} {index:<5d}")
+        tableOfSymb[len(tableOfSymb)+1] = (numLine, marker+marker, token, index)
         lexeme = ''
         state = initState
         return
