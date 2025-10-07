@@ -197,7 +197,7 @@ def processing():
         token = getToken(state, lexeme)
         index = indexIdConst(state, lexeme)
         print(f"{numLine:<3d} {lexeme:<10s} {token:<10s} {index:<5d}")
-        tableOfSymb[len(tableOfSymb)+1] = (numLine, lexeme[1:-1], token, index)
+        tableOfSymb[len(tableOfSymb)+1] = (numLine, lexeme[1:], token, index)
         lexeme = ''
         state = initState
         return
