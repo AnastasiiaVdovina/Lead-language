@@ -1,3 +1,5 @@
+from textwrap import indent
+
 from lexer import lex
 from lexer import tableOfSymb
 
@@ -49,8 +51,6 @@ def parseStatement():
         parseAssign()
     elif (lex, tok) == ('if', 'keyword'): #Настя
         parseIf()
-    elif (lex, tok) == ('for', 'keyword'): #Влад
-        parseFor()
     elif (lex, tok) == ('while', 'keyword'): #Настя
         parseWhile()
     elif (lex, tok) == ('repeat', 'keyword'): #Таня
@@ -59,6 +59,8 @@ def parseStatement():
         parseSwitch()
     elif (lex, tok) == ('guard', 'keyword'): #Влад
         parseGuard()
+    elif (lex, tok) == ('for', 'keyword'): #Влад
+        parseFor()
     elif (lex, tok) == ('print', 'keyword'):
         parsePrint()
     elif (lex, tok) == ('input', 'keyword'):
@@ -89,8 +91,21 @@ def parseWhile():
 
     indent = predIndt()
 
+# CycleRep = ‘repeat’ ‘{’  Body ‘while’  BoolExpression ‘}’
+def parseRepeatWhile():
+    global  numRow
+    indent =nextIndt()
+    print(indent + 'parseRepeatWhile():')
+    parseToken('repeat', 'keyword')
+    parseToken('{', 'brackets_op')
 
+    while numRow <= len_tableOfSymb and getSymb()[1] != '}':
+        parseStatement()
+    parseToken('}', 'brackets_op')
+    parseToken('while', 'keyword')
+    parseBoolExpression()
 
+    indent = predIndt()
 
 #Out = print ‘(‘ Ident | String ‘)’
 def parsePrint():
@@ -133,6 +148,21 @@ def parseInput():
 
     indent = predIndt()
 
+
+# SwitchStatement = ‘switch’ Ident ‘{’ {CaseElems}
+#           [DefaultElems]‘}’
+# CaseBlock = ‘case’ [‘-’] Integer ‘:’ StatementList
+# DefaultElems = ‘default’ ‘:’ StatementList
+# def parseSwitch():
+#     global numRow, tok, lex
+#     indent = nextIndt()
+#     print(indent + 'parseSwitch():')
+#     parseToken('switch', 'keyword')
+#     parseIdentList()
+#
+#
+#     while numRow <= len_tableOfSymb and getSymb()[1] != '}':
+#             parseStatement()
 
 def parseIf():
     global numRow

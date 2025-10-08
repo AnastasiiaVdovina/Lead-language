@@ -35,6 +35,17 @@ if (a > 0) {
 } else {
     print("Negative")
 }
+/* Цикл while */
+while (a < 5) {
+    print("While loop, a=\(a)")
+    a = a + 1
+}
+
+/* Цикл repeat-while */
+repeat {
+    print("Repeat loop, a=\(a)")
+    a = a - 1
+} while (a > 0)
 
 /* Оператор guard */
 guard (ok) else {
@@ -50,18 +61,6 @@ switch a {
     default:
         print("Other")
 }
-
-/* Цикл while */
-while (a < 5) {
-    print("While loop, a=\(a)")
-    a = a + 1
-}
-
-/* Цикл repeat-while */
-repeat {
-    print("Repeat loop, a=\(a)")
-    a = a - 1
-} while (a > 0)
 
 /* Цикл for */
 for (var i: int = 0; i < 3; i = i + 1) {
