@@ -65,7 +65,7 @@ tokStateTable = {6:'id', 2: 'intnum', 4: 'floatnum', 15:'assign', 18: 'rel_op', 
 # 8, 10, 19, 20, 21, 13, 16, 15, 14, 17, 18,
 # 22, 23, 33, 26, 32, 30, 31, 27, 28, 29, 24, 25}, Σ,  δ , 0 , {2, 4, 6, 7, 12, 9, 10, 21,
 #                                                               20, 15, 16, 14, 18, 23, 33, 32,
-#                                                                   31, 29, 25})
+#                                                                   31, 29, 25,34})
 
 # δ - state-transition_function
 stf={(0,'WhiteSpace'):0,  (0,'Digit'):1, (1,'Digit'):1, (1,'other'):2,
@@ -122,7 +122,7 @@ lexeme=''                       # ще не починали розпізнав�
 
 
 def lex():
-  global state,numLine,char,lexeme,numChar,FSuccess
+  global state,numLine,char,lexeme,numChar
   try:
     while numChar<lenCode:
       char=nextChar()				  # прочитати наступний символ
@@ -136,11 +136,14 @@ def lex():
         if char=="\n":
             numLine+=1
         lexeme+=char	# якщо стан НЕ закл. і не стартовий - додати символ до лексеми
+    fSuccess = ('Lexer', True)
     print('Lexer: Lexical analysis completed successfully')
-    FSuccess = ('Lexer', True)
+
   except SystemExit as e:
     # Повідомити про факт виявлення помилки
     print('Lexer: Program terminated with code {0}'.format(e))
+    fSuccess = ('Lexer', False)
+  return fSuccess
 
 def processing():
     global state, lexeme, char, numLine, numChar, tableOfSymb
@@ -210,7 +213,7 @@ def processing():
 
 
     # --- коментарі однорядкові ---
-    if state == 31:  # кінець однорядкового коментаря
+    if state == 31:
         token = getToken(state, lexeme.strip())
         marker = ''
         if token == 'comment':
@@ -223,7 +226,7 @@ def processing():
         tableOfSymb[len(tableOfSymb) + 1] = (numLine, marker, token, '')
         lexeme = ''
         state = initState
-        numLine += 1  # підвищуємо рядок саме тут
+        numLine += 1
         return
 
 
@@ -245,7 +248,6 @@ def processing():
         return
 
     # --- перенос строки ---
-
     if state == 34:
         lexeme = ''
         state = initState
@@ -253,7 +255,6 @@ def processing():
         return
 
     # --- одиничні математичні оператори (+, -, *, /) ---
-
     if state in (18, 32):
         token = getToken(state, lexeme)
         print(f"{numLine:<3d} {lexeme:<10s} {token:<10s}")
@@ -370,8 +371,8 @@ def indexIdConst(state,lexeme):
   return indx
 
 
-# запуск лексичного аналізатора	
-lex()
+# запуск лексичного аналізатора
+#lex()
 
 
 # Таблиці: розбору, ідентифікаторів та констант
