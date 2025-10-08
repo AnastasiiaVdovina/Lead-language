@@ -69,6 +69,28 @@ def parseStatement():
 
     indent = predIndt()
 
+#WhileStatement = “while” “(“ Condition “)” “{“ StatementList “}
+# ПРАВИЛЬНА версія
+def parseWhile():
+    global numRow
+    indent = nextIndt()
+    print(indent + 'parseWhile():')
+
+    parseToken('while', 'keyword')
+    parseToken('(', 'brackets_op')
+    parseExpression()
+    parseToken(')', 'brackets_op')
+    parseToken('{', 'brackets_op')
+
+    while numRow <= len_tableOfSymb and getSymb()[1] != '}':
+        parseStatement()
+
+    parseToken('}', 'brackets_op')
+
+    indent = predIndt()
+
+
+
 
 #Out = print ‘(‘ Ident | String ‘)’
 def parsePrint():
@@ -112,50 +134,37 @@ def parseInput():
     indent = predIndt()
 
 
-
-
 def parseIf():
     global numRow
     indent = nextIndt()
     print(indent + 'parseIf():')
 
-    numLine, lex, tok = getSymb()
-    if (lex, tok) == ('if', 'keyword'):
-        numRow += 1
-    else:
-        failParse('невідповідність інструкцій', (numLine, lex, tok, 'if'))
-
+    # Використовуємо parseToken для чистоти коду
+    parseToken('if', 'keyword')
     parseToken('(', 'brackets_op')
-
     parseExpression()
-
     parseToken(')', 'brackets_op')
-
     parseToken('{', 'brackets_op')
 
-    # Всередині фігурних дужок може бути одна або більше інструкцій.
-    # Парсимо їх, доки не зустрінемо закриваючу дужку '}'
     while numRow <= len_tableOfSymb and getSymb()[1] != '}':
         parseStatement()
 
     parseToken('}', 'brackets_op')
 
     # Перевіряємо наявність 'else'
-    if numRow <= len_tableOfSymb:
-        numLine, lex, tok = getSymb()
-        if (lex, tok) == ('else', 'keyword'):
-            numRow += 1
-            print(indent + '  Знайдено else')
-            # Перевіряємо, чи це 'else if'
-            numLine_after, lex_after, tok_after = getSymb()
-            if (lex_after, tok_after) == ('if', 'keyword'):
-                parseIf()  # Рекурсивний виклик для обробки 'else if'
-            else:
-                # Це звичайний 'else', розбираємо його блок
-                parseToken('{', 'brackets_op')
-                while numRow <= len_tableOfSymb and getSymb()[1] != '}':
-                    parseStatement()
-                parseToken('}', 'brackets_op')
+    if numRow <= len_tableOfSymb and getSymb()[1] == 'else':
+        print(indent + '  Знайдено else')
+        parseToken('else', 'keyword')
+
+        # Перевіряємо, чи це 'else if'
+        if numRow <= len_tableOfSymb and getSymb()[1] == 'if':
+            parseIf()  # Рекурсивний виклик для обробки 'else if'
+        else:
+            # Це звичайний 'else', розбираємо його блок
+            parseToken('{', 'brackets_op')
+            while numRow <= len_tableOfSymb and getSymb()[1] != '}':
+                parseStatement()
+            parseToken('}', 'brackets_op')
 
     indent = predIndt()
 
