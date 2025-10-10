@@ -35,8 +35,8 @@ def parseProgram():
         else:
             # жодна з інструкцій не відповідає
             # поточній лексемі у таблиці розбору,
-            failParse('невідповідність інструкцій',
-                      (numLine, lex, tok, 'очікувалось Declaration | Statement | Comment '))
+            failParse('incompatibility of instructions',
+                      (numLine, lex, tok, ' Declaration | Statement | Comment expected '))
 
 
 def parseStatement():
@@ -46,7 +46,7 @@ def parseStatement():
 
     numLine, lex, tok = getSymb()
     if tok == 'id':
-        print(indent + 'в рядку {0} - токен {1}'.format(numLine, (lex, tok)))
+        print(indent + 'in line {0} - token {1}'.format(numLine, (lex, tok)))
         numRow += 1
         parseAssign()
     elif (lex, tok) == ('if', 'keyword'): #Настя
@@ -67,7 +67,7 @@ def parseStatement():
         parseInput()
 
     else:
-        failParse('невідповідність інструкцій', (numLine, lex, tok, 'очікувався statement'))
+        failParse('incompatibility of instructions', (numLine, lex, tok, 'statement was expected'))
 
     indent = predIndt()
 
@@ -120,12 +120,12 @@ def parsePrint():
     numLine, lex, tok = getSymb()
 
     if tok == 'id':
-        print(indent + 'в рядку {0} - токен {1}'.format(numLine, (lex, tok)))
+        print(indent + 'in line {0} - token {1}'.format(numLine, (lex, tok)))
         numRow += 1
     elif  tok == 'str':
         numRow += 1
     else:
-        failParse('невідповідність інструкцій', (numLine, lex, tok, 'очікувався id або рядок'))
+        failParse('incompatibility of instructions', (numLine, lex, tok, 'either id or string were expected'))
 
 
     parseToken(')', 'brackets_op')
@@ -164,10 +164,10 @@ def parseSwitch():
     # ідентифікатор (змінна в дужках)
     numLine, lex, tok = getSymb()
     if tok == 'id':
-        print(indent + ' в рядку {0} - токен {1}'.format(numLine, (lex, tok)))
+        print(indent + ' in line {0} - token {1}'.format(numLine, (lex, tok)))
         numRow += 1
     else:
-        failParse('Очікувався ідентифікатор після switch', (numLine, lex, tok))
+        failParse('switch was expected after identifier', (numLine, lex, tok))
 
     # фігурна дужка відкриття
     parseToken('{', 'brackets_op')
@@ -183,7 +183,7 @@ def parseSwitch():
         elif lex == '}':
             break
         else:
-            failParse('Очікувався case, default або "}"', (numLine, lex, tok))
+            failParse('case, default або "}" were expected', (numLine, lex, tok))
 
     # закриваюча дужка
     parseToken('}', 'brackets_op')
@@ -221,10 +221,10 @@ def parseCaseBlock():
         numLine, lex, tok = getSymb()
 
     if tok == 'intnum':
-        print(indent + f'  Значення case: {lex}')
+        print(indent + f' case number: {lex}')
         numRow += 1
     else:
-        failParse('Очікувався цілий літерал після case', (numLine, lex, tok))
+        failParse('An integer number was expected after case', (numLine, lex, tok))
 
     parseToken(':', 'punct')
 
@@ -256,7 +256,7 @@ def parseIf():
 
     # Перевіряємо наявність 'else'
     if numRow <= len_tableOfSymb and getSymb()[1] == 'else':
-        print(indent + '  Знайдено else')
+        print(indent + '  founded else')
         parseToken('else', 'keyword')
 
         # Перевіряємо, чи це 'else if'
@@ -284,7 +284,7 @@ def parseDeclaration():
     elif (lex, tok) == ('let', 'keyword'):
         parseLetDeclaration()
     else:
-        failParse('невідповідність токенів', (numLine, lex, tok, 'var | let'))
+        failParse('token mismatch', (numLine, lex, tok, 'var | let'))
 
     indent = predIndt()
 
@@ -346,7 +346,7 @@ def parseExpression():
         numLine, lex, tok = getSymb()
         if tok == 'rel_op':
             numRow += 1
-            print(indent + f'  в рядку {numLine} - токен порівняння {(lex, tok)}')
+            print(indent + f'  in line {numLine} - comparison token {(lex, tok)}')
             parseArithmExpression()
 
     indent = predIndt()
@@ -364,7 +364,7 @@ def parseBoolExpression():
         numLine, lex, tok = getSymb()
         if (lex, tok) == ('||', 'logic_op'):
             numRow += 1
-            print(indent + 'в рядку {0} - токен {1}'.format(numLine, (lex, tok)))
+            print(indent + 'in line {0} - token {1}'.format(numLine, (lex, tok)))
             parseBoolTerm()
         else:
             F = False
@@ -384,7 +384,7 @@ def parseBoolTerm():
         numLine, lex, tok = getSymb()
         if (lex, tok) == ('&&', 'logic_op'):
             numRow += 1
-            print(indent + 'в рядку {0} - токен {1}'.format(numLine, (lex, tok)))
+            print(indent + 'in line {0} - token {1}'.format(numLine, (lex, tok)))
             parseBoolFactor()
         else:
             F = False
@@ -410,7 +410,7 @@ def parseBoolFactor():
         parseExpression()
         parseToken(')', 'brackets_op')
     else:
-        failParse('невідповідність токенів', (numLine, lex, tok, 'true | false | ! | (Expression)'))
+        failParse('token mismatch', (numLine, lex, tok, 'true | false | ! | (Expression)'))
 
     indent = predIndt()
 
@@ -431,7 +431,7 @@ def parseArithmExpression():
         numLine, lex, tok = getSymb()
         if tok == 'add_op':
             numRow += 1
-            print(indent + 'в рядку {0} - токен {1}'.format(numLine, (lex, tok)))
+            print(indent + 'in line {0} - token {1}'.format(numLine, (lex, tok)))
             parseTerm()
         else:
             F = False
@@ -449,7 +449,7 @@ def parseTerm():
         numLine, lex, tok = getSymb()
         if tok == 'mult_op':
             numRow += 1
-            print(indent + 'в рядку {0} - токен {1}'.format(numLine, (lex, tok)))
+            print(indent + 'in line {0} - token {1}'.format(numLine, (lex, tok)))
             parsePower()
         else:
             F = False
@@ -466,7 +466,7 @@ def parsePower():
         numLine, lex, tok = getSymb()
         if tok == 'pow_op':
             numRow += 1
-            print(indent + 'в рядку {0} - токен {1}'.format(numLine, (lex, tok)))
+            print(indent + 'in line {0} - token {1}'.format(numLine, (lex, tok)))
             parseFactor()
         else:
             F = False
@@ -480,14 +480,14 @@ def parseFactor():
     numLine, lex, tok = getSymb()
 
     if tok in ('id', 'intnum', 'floatnum'):
-        print(indent + 'в рядку {0} - токен {1}'.format(numLine, (lex, tok)))
+        print(indent + 'in line {0} - token {1}'.format(numLine, (lex, tok)))
         numRow += 1
     elif (lex, tok) == ('(', 'brackets_op'):
         parseToken('(', 'brackets_op')
         parseArithmExpression()
         parseToken(')', 'brackets_op')
     else:
-        failParse('невідповідність токенів', (numLine, lex, tok, 'ident | number | (arithmexpr)'))
+        failParse('token mismatch', (numLine, lex, tok, 'ident | number | (arithmexpr)'))
 
     indent = predIndt()
 
@@ -501,7 +501,7 @@ def parseSign():
     if (lex, tok) in (('+', 'add_op'), ('-', 'add_op')):
         parseToken(lex, 'add_op')
     else:
-        failParse('невідповідність токенів', (numLine, lex, tok, '+ | -'))
+        failParse('token mismatch', (numLine, lex, tok, '+ | -'))
 
     indent = predIndt()
 
@@ -513,9 +513,9 @@ def parseIdentList():
 
     numLine, lex, tok = getSymb()
     if tok != 'id':
-        failParse('невідповідність токенів', (numLine, lex, tok, 'очікувався ідентифікатор'))
+        failParse('token mismatch', (numLine, lex, tok, 'identifier was expected'))
 
-    print(indent + 'в рядку {0} - токен {1}'.format(numLine, (lex, tok)))
+    print(indent + 'in line {0} - token {1}'.format(numLine, (lex, tok)))
     numRow += 1
 
     while numRow <= len_tableOfSymb:
@@ -525,9 +525,9 @@ def parseIdentList():
 
             numLine, lex, tok = getSymb()  # Дивимось на токен після коми
             if tok != 'id':
-                failParse('невідповідність токенів', (numLine, lex, tok, 'очікувався ідентифікатор після коми'))
+                failParse('token mismatch', (numLine, lex, tok, 'identifier was expected after comma'))
 
-            print(indent + 'в рядку {0} - токен {1}'.format(numLine, (lex, tok)))
+            print(indent + 'in line {0} - token {1}'.format(numLine, (lex, tok)))
             numRow += 1
         else:
             break
@@ -545,7 +545,7 @@ def parseType():
     if lex in ('int', 'float', 'string', 'bool') and tok == 'keyword':
         parseToken(lex, 'keyword')
     else:
-        failParse('невідповідність токенів', (numLine, lex, tok, 'int | float | string | bool'))
+        failParse('token mismatch', (numLine, lex, tok, 'int | float | string | bool'))
 
     indent = predIndt()
 
@@ -575,52 +575,52 @@ def parseToken(lexeme, token):
     indent = nextIndt()
 
     if numRow > len_tableOfSymb:
-        failParse('неочікуваний кінець програми', (lexeme, token, numRow))
+        failParse('unexpected end of the program', (lexeme, token, numRow))
 
     numLine, lex, tok = getSymb()
 
     if (lex, tok) == (lexeme, token):
-        print(indent + 'parseToken: В рядку {0} токен {1}'.format(numLine, (lexeme, token)))
+        print(indent + 'parseToken: In line {0}, token {1}'.format(numLine, (lexeme, token)))
         numRow += 1
         predIndt()
         return True
     else:
-        failParse('невідповідність токенів', (numLine, lex, tok, lexeme, token))
+        failParse('token mismatch', (numLine, lex, tok, lexeme, token))
         return False
 
 
 
 def getSymb():
     if numRow > len_tableOfSymb:
-        failParse('getSymb(): неочікуваний кінець програми', numRow)
+        failParse('getSymb(): unexpected end of the program', numRow)
     numLine, lexeme, token, _ = tableOfSymb[numRow]
     return numLine, lexeme, token
 
 
 def failParse(str_msg, details):
-    if str_msg == 'неочікуваний кінець програми':
+    if str_msg == 'unexpected end of the program':
         (lexeme, token, row) = details
         print(
-            f'Parser ERROR: \n\t Неочікуваний кінець програми. Очікувався ({lexeme}, {token}) але таблиця символів закінчилась на рядку {row - 1}.')
+            f'Parser ERROR: \n\t Unexpected end of the program. Expected ({lexeme}, {token}) but the character table ended at row {row - 1}.')
         exit(1001)
-    elif str_msg == 'getSymb(): неочікуваний кінець програми':
+    elif str_msg == 'getSymb(): unexpected end of the program':
         row = details
         print(
-            f'Parser ERROR: \n\t Спроба прочитати рядок {row} з таблиці символів, але вона містить лише {len_tableOfSymb} записів.')
+            f'Parser ERROR: \n\t Attempt to read row {row} from the character table, but it only contains {len_tableOfSymb} entries.')
         exit(1002)
-    elif str_msg == 'невідповідність токенів':
+    elif str_msg == 'token mismatch':
         if len(details) == 5:
             (numLine, lexeme, token, expected_lex, expected_tok) = details
             print(
-                f'Parser ERROR: \n\t В рядку {numLine} неочікуваний елемент ({lexeme},{token}). \n\t Очікувався - ({expected_lex},{expected_tok}).')
+                f'Parser ERROR: \n\t Unexpected element ({lexeme},{token}) in line {numLine}. \n\t Expected - ({expected_lex},{expected_tok}).')
         else:
             (numLine, lexeme, token, expected) = details
             print(
-                f'Parser ERROR: \n\t В рядку {numLine} неочікуваний елемент ({lexeme},{token}). \n\t Очікувався - {expected}.')
+                f'Unexpected element ({lexeme},{token}) in line {numLine}. \n\t Expected - {expected}.')
         exit(1)
-    elif str_msg == 'невідповідність інструкцій':
+    elif str_msg == 'incompatibility of instructions':
         (numLine, lex, tok, expected) = details
-        print(f'Parser ERROR: \n\t В рядку {numLine} неочікуваний елемент ({lex},{tok}). \n\t Очікувався - {expected}.')
+        print(f'Parser ERROR: \n\t  Unexpected element ({lex},{tok}) in line {numLine}. \n\t Expected - {expected}.')
         exit(2)
     else:
         print(f"Parser ERROR: {str_msg} - {details}")
