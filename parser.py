@@ -153,16 +153,89 @@ def parseInput():
 #           [DefaultElems]‘}’
 # CaseBlock = ‘case’ [‘-’] Integer ‘:’ StatementList
 # DefaultElems = ‘default’ ‘:’ StatementList
-# def parseSwitch():
-#     global numRow, tok, lex
-#     indent = nextIndt()
-#     print(indent + 'parseSwitch():')
-#     parseToken('switch', 'keyword')
-#     parseIdentList()
-#
-#
-#     while numRow <= len_tableOfSymb and getSymb()[1] != '}':
-#             parseStatement()
+def parseSwitch():
+    global numRow
+    indent = nextIndt()
+    print(indent + 'parseSwitch():')
+
+    # switch keyword
+    parseToken('switch', 'keyword')
+
+    # ідентифікатор (змінна в дужках)
+    numLine, lex, tok = getSymb()
+    if tok == 'id':
+        print(indent + ' в рядку {0} - токен {1}'.format(numLine, (lex, tok)))
+        numRow += 1
+    else:
+        failParse('Очікувався ідентифікатор після switch', (numLine, lex, tok))
+
+    # фігурна дужка відкриття
+    parseToken('{', 'brackets_op')
+
+    # цикл по case або default
+    while numRow <= len_tableOfSymb:
+        numLine, lex, tok = getSymb()
+
+        if lex == 'case':
+            parseCaseBlock()
+        elif lex == 'default':
+            parseDefaultBlock()
+        elif lex == '}':
+            break
+        else:
+            failParse('Очікувався case, default або "}"', (numLine, lex, tok))
+
+    # закриваюча дужка
+    parseToken('}', 'brackets_op')
+    indent = predIndt()
+
+
+def parseDefaultBlock():
+    global numRow
+    indent = nextIndt()
+    print(indent + 'parseDefaultBlock():')
+
+    parseToken('default', 'keyword')
+    parseToken(':', 'punct')
+
+    # Виконуємо всі statements поки не зустрінемо '}'
+    while numRow <= len_tableOfSymb:
+        nextLex = getSymb()[1]
+        if nextLex == '}':
+            break
+        parseStatement()
+
+    indent = predIndt()
+
+def parseCaseBlock():
+    global numRow
+    indent = nextIndt()
+    print(indent + 'parseCaseBlock():')
+
+    parseToken('case', 'keyword')
+
+
+    numLine, lex, tok = getSymb()
+    if lex == '-':
+        parseToken(lex, 'add_op')
+        numLine, lex, tok = getSymb()
+
+    if tok == 'intnum':
+        print(indent + f'  Значення case: {lex}')
+        numRow += 1
+    else:
+        failParse('Очікувався цілий літерал після case', (numLine, lex, tok))
+
+    parseToken(':', 'punct')
+
+    # Statements до наступного case/default/закриття
+    while numRow <= len_tableOfSymb:
+        nextLex = getSymb()[1]
+        if nextLex in ('case', 'default', '}'):
+            break
+        parseStatement()
+
+    indent = predIndt()
 
 def parseIf():
     global numRow
