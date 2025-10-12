@@ -46,28 +46,29 @@ def parseStatement():
 
     numLine, lex, tok = getSymb()
     if tok == 'id':
-        print(indent + 'in line {0} - token {1}'.format(numLine, (lex, tok)))
+        print(indent + 'в рядку {0} - токен {1}'.format(numLine, (lex, tok)))
         numRow += 1
         parseAssign()
-    elif (lex, tok) == ('if', 'keyword'): #Настя
+    elif (lex, tok) == ('if', 'keyword'):
         parseIf()
-    elif (lex, tok) == ('while', 'keyword'): #Настя
+    elif (lex, tok) == ('while', 'keyword'):
         parseWhile()
-    elif (lex, tok) == ('repeat', 'keyword'): #Таня
+    elif (lex, tok) == ('repeat', 'keyword'):
         parseRepeatWhile()
-    elif (lex, tok) == ('switch', 'keyword'): #Таня
+    elif (lex, tok) == ('switch', 'keyword'):
         parseSwitch()
-    elif (lex, tok) == ('guard', 'keyword'): #Влад
+    elif (lex, tok) == ('guard', 'keyword'):
         parseGuard()
-    elif (lex, tok) == ('for', 'keyword'): #Влад
+    elif (lex, tok) == ('for', 'keyword'):
         parseFor()
     elif (lex, tok) == ('print', 'keyword'):
         parsePrint()
-    elif (lex, tok) == ('input', 'keyword'):
-        parseInput()
-
+    elif (lex, tok) == ('func', 'keyword'):
+        parseFunctionDeclaration()
+    elif (lex, tok) == ('return', 'keyword'):
+        parseReturnStatement()
     else:
-        failParse('incompatibility of instructions', (numLine, lex, tok, 'statement was expected'))
+        failParse('невідповідність інструкцій', (numLine, lex, tok, 'очікувався statement'))
 
     indent = predIndt()
 
@@ -554,15 +555,109 @@ def parseFactor():
     print(indent + 'parseFactor():')
     numLine, lex, tok = getSymb()
 
-    if tok in ('id', 'intnum', 'floatnum'):
-        print(indent + 'in line {0} - token {1}'.format(numLine, (lex, tok)))
+    if tok in ('intnum', 'floatnum'):
+        print(indent + 'в рядку {0} - токен {1}'.format(numLine, (lex, tok)))
         numRow += 1
-    elif (lex, tok) == ('(', 'brackets_op'):
+    elif tok == 'id':
+        # Заглядаємо наперед, щоб відрізнити змінну від виклику функції
+        if numRow + 1 <= len_tableOfSymb and tableOfSymb[numRow + 1][1] == '(':
+            parseFunctionCall()
+        else:  # Це просто змінна
+            print(indent + 'в рядку {0} - токен {1}'.format(numLine, (lex, tok)))
+            numRow += 1
+    elif lex == '(':
         parseToken('(', 'brackets_op')
-        parseArithmExpression()
+        parseExpression()
         parseToken(')', 'brackets_op')
     else:
-        failParse('token mismatch', (numLine, lex, tok, 'ident | number | (arithmexpr)'))
+        failParse('невідповідність токенів', (numLine, lex, tok, 'ident | number | function_call | (arithmexpr)'))
+    indent = predIndt()
+
+
+
+def parseFunctionCall():
+    global numRow
+    indent = nextIndt()
+    print(indent + 'parseFunctionCall():')
+
+    numLine, lex, tok = getSymb()
+    if tok == 'id':
+        print(indent + '  ім\'я функції: ' + lex)
+        numRow += 1
+
+    parseToken('(', 'brackets_op')
+
+    # Перевіряємо, чи є аргументи
+    if numRow <= len_tableOfSymb and getSymb()[1] != ')':
+        parseArgumentList()
+
+    parseToken(')', 'brackets_op')
+    indent = predIndt()
+
+
+def parseReturnStatement():
+    global numRow
+    indent = nextIndt()
+    print(indent + 'parseReturnStatement():')
+    parseToken('return', 'keyword')
+    # Після return може йти вираз, який функція повертає
+    parseExpression()
+    indent = predIndt()
+
+def parseArgumentList():
+    global numRow
+    indent = nextIndt()
+    print(indent + 'parseArgumentList():')
+
+    parseExpression()  # Перший аргумент
+
+    # Цикл для наступних аргументів через кому
+    while numRow <= len_tableOfSymb and getSymb()[1] == ',':
+        parseToken(',', 'punct')
+        parseExpression()
+
+    indent = predIndt()
+
+
+
+def parseFunctionDeclaration():
+    global numRow
+    indent = nextIndt()
+    print(indent + 'parseFunctionDeclaration():')
+
+    parseToken('func', 'keyword')
+
+    # Ім'я функції
+    if getSymb()[2] == 'id':
+        numRow += 1
+    else:
+        failParse('очікувалось ім\'я функції', getSymb())
+
+    parseToken('(', 'brackets_op')
+
+    # Список параметрів (спрощено, можна розширити)
+    while numRow <= len_tableOfSymb and getSymb()[1] != ')':
+        parseType()
+        if getSymb()[2] == 'id':
+            numRow += 1
+        if getSymb()[1] == ',':
+            parseToken(',', 'punct')
+
+    parseToken(')', 'brackets_op')
+
+    # Тип, що повертається
+    if getSymb()[1] == '=>':
+        parseToken('=>', 'keyword')
+        parseType()
+
+    parseToken('{', 'brackets_op')
+    while numRow <= len_tableOfSymb and getSymb()[1] != '}':
+        # Всередині функції можуть бути оголошення або інструкції
+        if getSymb()[1] in ('var', 'let'):
+            parseDeclaration()
+        else:
+            parseStatement()
+    parseToken('}', 'brackets_op')
 
     indent = predIndt()
 

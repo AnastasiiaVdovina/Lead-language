@@ -70,11 +70,11 @@ for (var i: int = 0; i < 3; i = i + 1) {
 }
 
 //виклик функції
-int powRes = pow(2, 4)
+var powRes: int = pow(2, 4)
 
 //функція
 func pow(int a, int b) => int {
-    int result = a ** b
+    var result: int = a ** b
     return result
 }
 
