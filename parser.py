@@ -189,6 +189,81 @@ def parseSwitch():
     parseToken('}', 'brackets_op')
     indent = predIndt()
 
+def parseGuard():
+    global numRow
+    indent = nextIndt()
+    print(indent + 'parseGuard():')
+
+    # guard keyword
+    parseToken('guard', 'keyword')
+
+    # (
+    parseToken('(', 'brackets_op')
+    parseExpression()
+    # )
+    parseToken(')', 'brackets_op')
+
+    # else
+    parseToken('else', 'keyword')
+
+    # { StatementList }
+    parseToken('{', 'brackets_op')
+    while numRow <= len_tableOfSymb and getSymb()[1] != '}':
+        parseStatement()
+    parseToken('}', 'brackets_op')
+
+    indent = predIndt()
+
+def parseFor():
+    global numRow
+    indent = nextIndt()
+    print(indent + 'parseFor():')
+
+    # for keyword
+    parseToken('for', 'keyword')
+
+    # (
+    parseToken('(', 'brackets_op')
+
+    # initialization
+    numLine, lex, tok = getSymb()
+    if tok == 'id':
+        print(indent + f'in line {numLine} - token {lex, tok}')
+        numRow += 1
+        parseAssign()
+    elif lex in ('var', 'let'):
+        parseDeclaration()
+    else:
+        failParse('for initialization expected', (numLine, lex, tok, 'identifier or var/let declaration'))
+
+    # ;
+    parseToken(';', 'punct')
+
+    # condition
+    parseExpression()
+
+    # ;
+    parseToken(';', 'punct')
+
+    # increment
+    numLine, lex, tok = getSymb()
+    if tok == 'id':
+        print(indent + f'in line {numLine} - token {lex, tok}')
+        numRow += 1
+        parseAssign()
+    else:
+        failParse('for increment expected', (numLine, lex, tok, 'identifier'))
+
+    # )
+    parseToken(')', 'brackets_op')
+
+    # body { StatementList }
+    parseToken('{', 'brackets_op')
+    while numRow <= len_tableOfSymb and getSymb()[1] != '}':
+        parseStatement()
+    parseToken('}', 'brackets_op')
+
+    indent = predIndt()
 
 def parseDefaultBlock():
     global numRow
