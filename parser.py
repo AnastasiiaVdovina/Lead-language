@@ -73,7 +73,6 @@ def parseStatement():
     indent = predIndt()
 
 #WhileStatement = “while” “(“ Condition “)” “{“ StatementList “}
-# ПРАВИЛЬНА версія
 def parseWhile():
     global numRow
     indent = nextIndt()
@@ -81,7 +80,7 @@ def parseWhile():
 
     parseToken('while', 'keyword')
     parseToken('(', 'brackets_op')
-    parseExpression()
+    parseBooleanCondition()
     parseToken(')', 'brackets_op')
     parseToken('{', 'brackets_op')
 
@@ -104,7 +103,7 @@ def parseRepeatWhile():
         parseStatement()
     parseToken('}', 'brackets_op')
     parseToken('while', 'keyword')
-    parseBoolExpression()
+    parseBooleanCondition()
 
     indent = predIndt()
 
@@ -200,7 +199,7 @@ def parseGuard():
 
     # (
     parseToken('(', 'brackets_op')
-    parseExpression()
+    parseBooleanCondition()
     # )
     parseToken(')', 'brackets_op')
 
@@ -241,7 +240,7 @@ def parseFor():
     parseToken(';', 'punct')
 
     # condition
-    parseExpression()
+    parseBooleanCondition()
 
     # ;
     parseToken(';', 'punct')
@@ -321,7 +320,7 @@ def parseIf():
     # Використовуємо parseToken для чистоти коду
     parseToken('if', 'keyword')
     parseToken('(', 'brackets_op')
-    parseExpression()
+    parseBooleanCondition()
     parseToken(')', 'brackets_op')
     parseToken('{', 'brackets_op')
 
@@ -397,6 +396,45 @@ def parseLetDeclaration():
         numLine, lex, tok = getSymb()
         if tok in ('assign_op', 'add_ass_op', 'mult_ass_op'):
             parseAssign()
+
+    indent = predIndt()
+
+
+def parseBooleanCondition():
+    global numRow
+    indent = nextIndt()
+    print(indent + 'parseBooleanCondition():')
+
+    numLine, lex, tok = getSymb()
+
+    # (true, false, !)
+    if tok == 'boolval' or lex == '!':
+        parseBoolExpression()
+
+    # (a > 0)
+    elif lex == '(':
+        # Якщо починається з дужки, використовуємо parseExpression,
+        # яка обробить і ( і ) і внутрішній вираз (включно з порівнянням)
+        parseToken('(', 'brackets_op')
+        parseExpression()
+        parseToken(')', 'brackets_op')
+
+    # (a > 0) без зовнішніх дужок
+    else:
+        # Розбираємо ліву частину (арифметичний вираз, наприклад, 'a' або 'a + 5')
+        parseArithmExpression()
+
+        # Тепер ми очікуємо оператор порівняння
+        numLine, lex, tok = getSymb()
+        if tok == 'rel_op':
+            numRow += 1
+            print(indent + f'  in line {numLine} - comparison token {(lex, tok)}')
+            # Розбираємо праву частину
+            parseArithmExpression()
+        else:
+            # Якщо після ArithmExpression немає rel_op, то це помилка
+            failParse('token mismatch', (numLine, lex, tok,
+                                         'Relational operator (>, <, ==, etc.) expected after arithmetic term in condition'))
 
     indent = predIndt()
 

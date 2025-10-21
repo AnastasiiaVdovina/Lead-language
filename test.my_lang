@@ -28,7 +28,7 @@ print("Enter float: ")
 pi = input()
 
 /* Умовний оператор if-else */
-if (a > 0) {
+if (a>1) {
     print("Positive")
 } else if (a == 0) {
     print("Zero")
@@ -36,9 +36,14 @@ if (a > 0) {
     print("Negative")
 }
 /* Цикл while */
-while (a < 5) {
+while (a + 5 > 1) {
     print("While loop, a=\(a)")
     a = a + 1
+    while (a < 5) {
+    print("While loop, a=\(a)")
+    a = a + 1
+}
+
 }
 
 /* Цикл repeat-while */
@@ -50,7 +55,15 @@ repeat {
 /* Оператор switch */
 switch a {
     case -1:
-        print("One")
+        while (a < 5) {
+        print("While loop, a=\(a)")
+        a = a + 1
+}
+while (a < 5) {
+    print("While loop, a=\(a)")
+    a = a + 1
+}
+
     case 2:
         print("Two")
     default:
@@ -58,7 +71,7 @@ switch a {
 }
 
 /* Оператор guard */
-guard (ok) else {
+guard (a>0) else {
     print("Access denied")
 }
 
