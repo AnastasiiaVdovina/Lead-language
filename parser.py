@@ -678,13 +678,17 @@ def parseFunctionDeclaration():
 
     parseToken('(', 'brackets_op')
 
-    # Список параметрів (спрощено, можна розширити)
     while numRow <= len_tableOfSymb and getSymb()[1] != ')':
         parseType()
         if getSymb()[2] == 'id':
             numRow += 1
+        else:
+            failParse('parameter name expected', getSymb())
+
         if getSymb()[1] == ',':
             parseToken(',', 'punct')
+        elif getSymb()[1] != ')':
+            failParse("',' or ')' expected after parameter", getSymb())
 
     parseToken(')', 'brackets_op')
 
