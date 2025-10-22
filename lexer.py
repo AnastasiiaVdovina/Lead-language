@@ -370,16 +370,16 @@ def indexIdConst(state,lexeme):
 
   return indx
 
-
-# запуск лексичного аналізатора
-#lex()
-
-
 # Таблиці: розбору, ідентифікаторів та констант
 # print('-'*100)
 # print('tableOfSymb:{0}'.format(tableOfSymb))
 # print('tableOfId:{0}'.format(tableOfId))
 # print('tableOfConst:{0}'.format(tableOfConst))
+
+# запуск лексичного аналізатора
+# lex()
+
+
 
 print('-' * 100)
 print('--- Lexical analysis tables ---')
@@ -428,8 +428,8 @@ def format_id_const_tabular(data_table, name):
     return output
 
 
-
-print("\ntableOfSymb:")
-print(format_table_of_symb_tabular(tableOfSymb))
-print(format_id_const_tabular(tableOfId, 'tableOfId'))
-print(format_id_const_tabular(tableOfConst, 'tableOfConst'))
+#
+# print("\ntableOfSymb:")
+# print(format_table_of_symb_tabular(tableOfSymb))
+# print(format_id_const_tabular(tableOfId, 'tableOfId'))
+# print(format_id_const_tabular(tableOfConst, 'tableOfConst'))

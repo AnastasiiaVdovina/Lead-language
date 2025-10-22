@@ -37,6 +37,7 @@ def parseProgram():
             # поточній лексемі у таблиці розбору,
             failParse('incompatibility of instructions',
                       (numLine, lex, tok, ' Declaration | Statement | Comment expected '))
+    print("Parser: Syntax analysis completed successfully")
 
 
 def parseStatement():
@@ -45,8 +46,9 @@ def parseStatement():
     global numRow
 
     numLine, lex, tok = getSymb()
+
     if tok == 'id':
-        print(indent + 'в рядку {0} - токен {1}'.format(numLine, (lex, tok)))
+        print(indent + 'in line {0} - token {1}'.format(numLine, (lex, tok)))
         numRow += 1
         parseAssign()
     elif (lex, tok) == ('if', 'keyword'):
@@ -68,7 +70,7 @@ def parseStatement():
     elif (lex, tok) == ('return', 'keyword'):
         parseReturnStatement()
     else:
-        failParse('невідповідність інструкцій', (numLine, lex, tok, 'очікувався statement'))
+        failParse('inconsistency of instructions', (numLine, lex, tok, 'statement expected'))
 
     indent = predIndt()
 
@@ -173,7 +175,8 @@ def parseSwitch():
     parseToken('{', 'brackets_op')
 
     # цикл по case або default
-    while numRow <= len_tableOfSymb:
+    while numRow <= len_tableOfSymb and getSymb()[1] != '}':
+
         numLine, lex, tok = getSymb()
 
         if lex == 'case':
@@ -182,6 +185,8 @@ def parseSwitch():
             parseDefaultBlock()
         elif lex == '}':
             break
+        elif numRow == len_tableOfSymb:
+            failParse('token mismatch', (numLine, lex, tok, 'closing brace "}" expected'))
         else:
             failParse('case, default або "}" were expected', (numLine, lex, tok))
 
@@ -594,21 +599,21 @@ def parseFactor():
     numLine, lex, tok = getSymb()
 
     if tok in ('intnum', 'floatnum'):
-        print(indent + 'в рядку {0} - токен {1}'.format(numLine, (lex, tok)))
+        print(indent + 'in line {0} - token {1}'.format(numLine, (lex, tok)))
         numRow += 1
     elif tok == 'id':
         # Заглядаємо наперед, щоб відрізнити змінну від виклику функції
         if numRow + 1 <= len_tableOfSymb and tableOfSymb[numRow + 1][1] == '(':
             parseFunctionCall()
         else:  # Це просто змінна
-            print(indent + 'в рядку {0} - токен {1}'.format(numLine, (lex, tok)))
+            print(indent + 'in line {0} - token {1}'.format(numLine, (lex, tok)))
             numRow += 1
     elif lex == '(':
         parseToken('(', 'brackets_op')
         parseExpression()
         parseToken(')', 'brackets_op')
     else:
-        failParse('невідповідність токенів', (numLine, lex, tok, 'ident | number | function_call | (arithmexpr)'))
+        failParse('token mismatch', (numLine, lex, tok, 'ident | number | function_call | (arithmexpr)'))
     indent = predIndt()
 
 
@@ -620,7 +625,7 @@ def parseFunctionCall():
 
     numLine, lex, tok = getSymb()
     if tok == 'id':
-        print(indent + '  ім\'я функції: ' + lex)
+        print(indent + '  function name: ' + lex)
         numRow += 1
 
     parseToken('(', 'brackets_op')
@@ -669,7 +674,7 @@ def parseFunctionDeclaration():
     if getSymb()[2] == 'id':
         numRow += 1
     else:
-        failParse('очікувалось ім\'я функції', getSymb())
+        failParse('function name expected', getSymb())
 
     parseToken('(', 'brackets_op')
 
