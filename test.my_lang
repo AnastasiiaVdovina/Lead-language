@@ -10,8 +10,8 @@ var ok: bool = true
 var name: string = "Lead language"
 
 //константа
-let a: float = 3.14
-var a: int = -5
+let cnst: float = 3.14
+var vrbl: int = -5
 /* Арифметика і логічні операції */
 a = -5 + 3 * 2 - 1
 pi = pi / 2.0 ** 3
@@ -23,9 +23,9 @@ b /= 2
 
 /* Введення даних */
 print("Enter integer: ")
-a = input()
+//a = input()
 print("Enter float: ")
-pi = input()
+//pi = input()
 
 /* Умовний оператор if-else */
 if (a>1) {
@@ -82,13 +82,16 @@ for (var i: int = 0; i < 3; i = i + 1) {
     print("For loop i=\(i)")
 }
 
-//виклик функції
-var powRes: int = pow(2, 4)
+
 
 //функція
 func pow(int a, int b) => int {
     var result: int = a ** b
     return result
 }
+
+//виклик функції
+var powRes: int = pow(2, 4)
+
 
 /* Кінець програми */
