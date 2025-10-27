@@ -615,9 +615,8 @@ def parseTerm():
 
             # Правило 10: Ділення на нуль (проста перевірка на літерал)
             r_numLine, r_lex, r_tok = getSymb()
-            if op_lex == '/' and r_tok in ('intnum', 'floatnum') and float(r_lex) == 0.0:
+            if op_lex == '/' and r_tok in ('intnum', 'floatnum') and float(r_lex) == 0.0 :
                 st.failSem("Ділення на нуль (літерал)", op_line)
-
             r_type = parsePower()
 
             # Перевірка типів для множення/ділення
@@ -976,6 +975,9 @@ def parseAssign(id_info):
             if arith_op is None:
                 st.failSem(f"Неврахований оператор '{assign_lex}'", assign_line)
                 return  # Виходимо, щоб уникнути подальших помилок
+
+            if assign_lex == '/=' and tok in ('intnum', 'floatnum') and float(lex) == 0.0:
+                st.failSem("Ділення на нуль в операторі /=", assign_line)
 
             # Перевіряємо, чи сама операція (a + b) валідна
             # (Правила 11, 12, 15)
