@@ -777,6 +777,7 @@ def parseReturnStatement():
     if not st.functionContextStack:
         st.failSem("'return' не може бути поза тілом функції", ret_line)
 
+    st.functionContextStack[-1]['has_return'] = True
     expected_type = st.functionContextStack[-1]['return_type']
 
     # Перевіряємо, чи є вираз після return
@@ -876,7 +877,7 @@ def parseFunctionDeclaration():
     st.insertName(parentContext, func_name, func_line, func_attr)
 
     # 6. Додаємо в стек для перевірки 'return'
-    st.functionContextStack.append({'name': func_name, 'return_type': return_type})
+    st.functionContextStack.append({'name': func_name, 'return_type': return_type,'has_return': False })
 
     # 7. Розбираємо тіло функції
     parseToken('{', 'brackets_op')
@@ -895,6 +896,9 @@ def parseFunctionDeclaration():
             parseStatement()
 
     parseToken('}', 'brackets_op')
+    func_context = st.functionContextStack[-1]
+    if return_type != 'void' and not func_context['has_return']:
+        st.failSem(f"Функція '{func_name}' має тип '{return_type}', але не містить 'return'", func_line)
 
     # 8. Виходимо з області видимості
     st.currentContext = parentContext
