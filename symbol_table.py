@@ -145,3 +145,20 @@ def check_assign(var_type, expr_type, line):
         failSem(f"Неможливо присвоїти '{expr_type}' змінній типу '{var_type}'", line)
 
     failSem(f"Неможливо присвоїти '{expr_type}' змінній типу '{var_type}'", line)
+
+def check_return_type(var_type, expr_type, line):
+    if var_type == expr_type:
+        return  # Типи збігаються
+
+    # Правило 16: float = int
+    if var_type == 'float' and expr_type == 'int':
+        return  # Дозволено неявне перетворення
+
+    # Правило 17: int = float
+    if var_type == 'int' and expr_type == 'float':
+        failSem(f"Expected return type {var_type}, return typed used {expr_type}", line)
+
+    # Правило 12: bool/string
+    if var_type in ('bool', 'string') or expr_type in ('bool', 'string'):
+        failSem(f"Expected return type {var_type}, return typed used {expr_type}", line)
+

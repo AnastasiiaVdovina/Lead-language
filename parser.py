@@ -791,7 +791,7 @@ def parseReturnStatement():
             st.failSem(f"Функція з типом 'void' не повинна повертати значення", ret_line)
 
         # Перевірка типу, що повертається
-        st.check_assign(expected_type, expr_type, ret_line)
+        st.check_return_type(expected_type, expr_type, ret_line)
 
     else:
         # Правило 9 (модифіковане):
