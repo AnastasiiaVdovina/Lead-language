@@ -388,7 +388,7 @@ def parseDeclaration():
         val_status = 'assigned'  # Ініціалізовано
     elif is_const:
         # 'let' (константи) мають бути ініціалізовані
-        st.failSem(f"Константа 'let' повинна бути ініціалізована при оголошенні", numLine)
+        st.failSem(f"The ‘let’ constant must be initialized when declared", numLine)
 
     # 6. Додаємо всі ідентифікатори в ST
     idx = len(st.tabName[st.currentContext]) - 1  # -1 бо 'declIn'
@@ -461,7 +461,7 @@ def parseBooleanCondition():
     expr_type = parseExpression()
 
     if expr_type != 'bool':
-        st.failSem(f"Умова (в if, while тощо) повинна мати тип 'bool', а не '{expr_type}'", line)
+        st.failSem(f"The condition (in if, while, etc.) must be of type ‘bool’, not ‘{expr_type}’.", line)
 
     indent = predIndt()
     # Нічого не повертаємо, просто перевіряємо
@@ -616,7 +616,7 @@ def parseTerm():
             # Правило 10: Ділення на нуль (проста перевірка на літерал)
             r_numLine, r_lex, r_tok = getSymb()
             if op_lex == '/' and r_tok in ('intnum', 'floatnum') and float(r_lex) == 0.0 :
-                st.failSem("Ділення на нуль (літерал)", op_line)
+                st.failSem("Division by zero (literal)", op_line)
             r_type = parsePower()
 
             # Перевірка типів для множення/ділення
@@ -657,7 +657,7 @@ def parseFactor():
     factor_type = 'type_error'  # Початкове значення
 
     if tok in ('intnum', 'floatnum'):
-        print(indent + 'в рядку {0} - токен {1}'.format(numLine, (lex, tok)))
+        print(indent + 'in line {0} - token {1}'.format(numLine, (lex, tok)))
         numRow += 1
         factor_type = 'int' if tok == 'intnum' else 'float'
     elif tok == 'id':
@@ -683,7 +683,7 @@ def parseFactor():
         factor_type = parseExpression()  # Тип того, що в дужках
         parseToken(')', 'brackets_op')
     else:
-        failParse('невідповідність токенів', (numLine, lex, tok, 'ident | number | function_call | (arithmexpr)'))
+        failParse('token mismatch', (numLine, lex, tok, 'ident | number | function_call | (arithmexpr)'))
 
     indent = predIndt()
     return factor_type  # Повертаємо тип
@@ -697,7 +697,7 @@ def parseFunctionCall():
     # 1. Знаходимо функцію в ST
     numLine, lex, tok = getSymb()
     if tok != 'id':
-        failParse('очікувалось ім\'я функції', getSymb())
+        failParse('expected function name', getSymb())
 
     cxt_found, name, attr = st.findName(lex, st.currentContext, numLine)
     func_kind = attr[1]
@@ -705,7 +705,7 @@ def parseFunctionCall():
     func_params_count = attr[4]  # Це 'nParam', тобто кількість
 
     if func_kind != 'func':
-        st.failSem(f"'{lex}' не є функцією, це '{func_kind}'", numLine)
+        st.failSem(f"'{lex}‘ is not a function, it is ’{func_kind}'", numLine)
 
     numRow += 1
     parseToken('(', 'brackets_op')
@@ -732,13 +732,13 @@ def parseFunctionCall():
 
             # Перевіряємо, чи всі параметри знайдені (на випадок помилки)
             if None in param_list:
-                st.failSem(f"Помилка читання параметрів для функції '{name}'", numLine)
+                st.failSem(f"Error reading parameters for function '{name}'", numLine)
 
             expected_types = param_list
 
         except KeyError:
             # Ця помилка не має виникнути, якщо `findName` спрацював
-            st.failSem(f"Не знайдено область видимості для функції '{name}'", numLine)
+            st.failSem(f"No scope found for function '{name}'", numLine)
 
     # 3. Отримуємо реальні типи аргументів з виклику
     actual_types = []
@@ -748,7 +748,7 @@ def parseFunctionCall():
 
     # 4. Перевіряємо кількість
     if len(actual_types) != len(expected_types):
-        st.failSem(f"Функція '{name}' очікує {len(expected_types)} аргументів, але отримала {len(actual_types)}",
+        st.failSem(f"The function ‘{name}’ expects {len(expected_types)} arguments, but received",
                    numLine)
 
     # 5. Перевіряємо типи (
@@ -775,7 +775,7 @@ def parseReturnStatement():
     parseToken('return', 'keyword')
 
     if not st.functionContextStack:
-        st.failSem("'return' не може бути поза тілом функції", ret_line)
+        st.failSem("'return' cannot be outside the function body", ret_line)
 
     st.functionContextStack[-1]['has_return'] = True
     expected_type = st.functionContextStack[-1]['return_type']
@@ -788,7 +788,7 @@ def parseReturnStatement():
         expr_type = parseExpression()
         # Правило 8:
         if expected_type == 'void':
-            st.failSem(f"Функція з типом 'void' не повинна повертати значення", ret_line)
+            st.failSem(f"A function with type ‘void’ must not return a value.", ret_line)
 
         # Перевірка типу, що повертається
         st.check_return_type(expected_type, expr_type, ret_line)
@@ -797,7 +797,7 @@ def parseReturnStatement():
         # Правило 9 (модифіковане):
         if expected_type != 'void':
             st.failSem(
-                f"Функція повинна повертати значення типу '{expected_type}', але 'return' використано без виразу",
+                f"The function must return a value of type '{expected_type}', but ‘return’ is used without an expression",
                 ret_line)
 
     indent = predIndt()
@@ -834,7 +834,7 @@ def parseFunctionDeclaration():
     # 1. Ім'я функції
     func_line, func_name, func_tok = getSymb()
     if func_tok != 'id':
-        failParse('очікувалось ім\'я функції', getSymb())
+        failParse('expected function name', getSymb())
     numRow += 1
 
     # 2. Створюємо нову область видимості
@@ -859,7 +859,7 @@ def parseFunctionDeclaration():
             num_params += 1
             numRow += 1
         else:
-            failParse('очікувався ідентифікатор параметра', getSymb())
+            failParse('expected parameter identifier', getSymb())
 
         if getSymb()[1] == ',':
             parseToken(',', 'punct')
@@ -898,7 +898,7 @@ def parseFunctionDeclaration():
     parseToken('}', 'brackets_op')
     func_context = st.functionContextStack[-1]
     if return_type != 'void' and not func_context['has_return']:
-        st.failSem(f"Функція '{func_name}' має тип '{return_type}', але не містить 'return'", func_line)
+        st.failSem(f"The function ‘{func_name}’ has type ‘{return_type}’, but does not contain ‘return’", func_line)
 
     # 8. Виходимо з області видимості
     st.currentContext = parentContext
@@ -936,12 +936,12 @@ def parseAssign(id_info):
 
     # 2. Перевіряємо на присвоєння константі (правило 6)
     if id_kind == 'let':
-        st.failSem(f"Неможливо змінити значення константи (let) '{id_lex}'", id_line)
+        st.failSem(f"Impossible to change the value of a constant (let) '{id_lex}'", id_line)
 
     # 3. Отримуємо оператор присвоєння
     assign_line, assign_lex, assign_tok = getSymb()
     if assign_tok not in ('assign_op', 'add_ass_op', 'mult_ass_op'):
-        failParse('token mismatch', (assign_line, assign_lex, assign_tok, 'оператор присвоєння (=, +=, *= тощо)'))
+        failParse('token mismatch', (assign_line, assign_lex, assign_tok, 'assignment operator (=, +=, *=, etc)'))
 
     parseToken(assign_lex, assign_tok)
 
@@ -951,7 +951,7 @@ def parseAssign(id_info):
         # Особливий випадок для input()
         parseInput()
         if id_type not in ('int', 'float', 'string'):
-            st.failSem(f"input() можна присвоїти лише до 'int', 'float' або 'string', але не до '{id_type}'",
+            st.failSem(f"input() can only be assigned to ‘int’, ‘float’, or ‘string’, but not to'{id_type}'",
                        assign_line)
         print(f"Semantic: Semantically accepting input() into var of type '{id_type}'")
 
@@ -977,11 +977,11 @@ def parseAssign(id_info):
             arith_op = op_map.get(assign_lex)
 
             if arith_op is None:
-                st.failSem(f"Неврахований оператор '{assign_lex}'", assign_line)
+                st.failSem(f"Unaccounted operator  '{assign_lex}'", assign_line)
                 return  # Виходимо, щоб уникнути подальших помилок
 
             if assign_lex == '/=' and tok in ('intnum', 'floatnum') and float(lex) == 0.0:
-                st.failSem("Ділення на нуль в операторі /=", assign_line)
+                st.failSem("Division by zero in the /= operator", assign_line)
 
             # Перевіряємо, чи сама операція (a + b) валідна
             # (Правила 11, 12, 15)
@@ -995,7 +995,7 @@ def parseAssign(id_info):
             st.check_assign(id_type, result_type, assign_line)
 
         else:
-            st.failSem(f"Невідомий тип оператора присвоєння '{assign_tok}'", assign_line)
+            st.failSem(f"Unknown assignment operator type '{assign_tok}'", assign_line)
 
     # 7. Позначаємо змінну як ініціалізовану
     st.updateNameVal(id_lex, st.currentContext, id_line, 'assigned')

@@ -14,7 +14,7 @@ functionContextStack = []
 
 #Функція для семантичних помилок
 def failSem(message, line_num=''):
-    line_info = f"в рядку {line_num}" if line_num else ""
+    line_info = f"in line {line_num}" if line_num else ""
     print(f"Semantic ERROR {line_info}: \n\t {message}")
     exit(10)
 
@@ -23,12 +23,12 @@ def insertName(cxt, name, line, attr):
     try:
         if name in tabName[cxt]:
 
-            failSem(f"Повторне оголошення '{name}' в області видимості '{cxt}'", line)
+            failSem(f"Repeated announcement ‘{name}’ in visibility area '{cxt}'", line)
         tabName[cxt][name] = attr
         print(f"Semantic: Inserted {name} into {cxt} with {attr}")
         return True
     except KeyError:
-        failSem(f"Невідома область видимості '{cxt}'", line)
+        failSem(f"Unknown visibility area '{cxt}'", line)
 
 #Шукає ім'я в поточній та батьківських областях перевіряє на неоголошені (правило 3)
 def findName(name, cxt, line):
@@ -46,9 +46,9 @@ def findName(name, cxt, line):
             current_cxt = tabName[current_cxt]['declIn']
 
 
-        failSem(f"Використання неоголошеної змінної '{name}'. Перевірені області: {contexts}", line)
+        failSem(f"Use of undeclared variable ‘{name}’. Checked areas: {contexts}", line)
     except KeyError:
-        failSem(f"Помилка пошуку імені '{name}' в {cxt}", line)
+        failSem(f"Error searching for name ‘{name}’ in {cxt}", line)
 
 #Оновлює поле 'val' для змінної (на 'assigned')
 def updateNameVal(name, cxt, line, newValue):
@@ -65,10 +65,10 @@ def updateNameVal(name, cxt, line, newValue):
             current_cxt = tabName[current_cxt]['declIn']
 
         # Це не мало б статись, якщо findName було викликано раніше
-        failSem(f"Неможливо оновити неоголошену змінну '{name}'", line)
+        failSem(f"Cannot update undeclared variable '{name}'", line)
 
     except KeyError:
-        failSem(f"Помилка оновлення імені '{name}' в {cxt}", line)
+        failSem(f"Error updating name ‘{name}’ in {cxt}", line)
 
 
 # --- Допоміжні функції перевірки типів ---
@@ -83,12 +83,12 @@ def check_arithm_op(l_type, op, r_type, line):
             return 'string'
         else:
             # Забороняємо всі інші операції
-            failSem(f"Операція '{op}' не може бути застосована до '{l_type}' та '{r_type}'", line)
+            failSem(f"The operation ‘{op}’ cannot be applied to ‘{l_type}’ and '{r_type}'", line)
             return 'type_error'
 
     # --- Правило 12: Обробка Bool ---
     if l_type == 'bool' or r_type == 'bool':
-        failSem(f"Арифметична операція '{op}' не може бути застосована до '{l_type}' та '{r_type}'", line)
+        failSem(f"The arithmetic operation ‘{op}’ cannot be applied to ‘{l_type}’ and ‘{r_type}’", line)
         return 'type_error'
 
     # --- Правило 15: int + float -> float ---
@@ -106,7 +106,7 @@ def check_arithm_op(l_type, op, r_type, line):
             return 'int'  # Цілочисельне ділення
         return 'int'
 
-    failSem(f"Невідома комбінація типів для операції '{op}': '{l_type}' та '{r_type}'", line)
+    failSem(f"Unknown combination of types for operation ‘{op}’: ‘{l_type}’ and '{r_type}'", line)
     return 'type_error'
 
 
@@ -116,14 +116,14 @@ def check_rel_op(l_type, op, r_type, line):
     # Правило 12: bool та string можна порівнювати тільки між собою
     if l_type in ('bool', 'string') or r_type in ('bool', 'string'):
         if l_type != r_type:
-            failSem(f"Операція порівняння '{op}' не може бути застосована до '{l_type}' та '{r_type}'", line)
+            failSem(f"The comparison operation ‘{op}’ cannot be applied to ‘{l_type}’ and '{r_type}'", line)
         return  # 'bool' == 'bool' or 'string' == 'string' - це ОК
 
     # Правило 14: int та float можна порівнювати
     if l_type in ('int', 'float') and r_type in ('int', 'float'):
         return  # ОК
 
-    failSem(f"Операція порівняння '{op}' не може бути застосована до '{l_type}' та '{r_type}'", line)
+    failSem(f"The comparison operation ‘{op}’ cannot be applied to ‘{l_type}’ and '{r_type}'", line)
 
 
 #перевіряє типи для присвоєння (правила 16, 17)
@@ -138,13 +138,13 @@ def check_assign(var_type, expr_type, line):
 
     # Правило 17: int = float
     if var_type == 'int' and expr_type == 'float':
-        failSem(f"Неможливо присвоїти 'float' змінній типу 'int' (заборонене неявне перетворення)", line)
+        failSem(f"Cannot assign ‘float’ to a variable of type ‘int’ (implicit conversion is not allowed)", line)
 
     # Правило 12: bool/string
     if var_type in ('bool', 'string') or expr_type in ('bool', 'string'):
-        failSem(f"Неможливо присвоїти '{expr_type}' змінній типу '{var_type}'", line)
+        failSem(f"Cannot assign ‘{expr_type}’ to variable of type '{var_type}'", line)
 
-    failSem(f"Неможливо присвоїти '{expr_type}' змінній типу '{var_type}'", line)
+    failSem(f"Cannot assign ‘{expr_type}’ to variable of type '{var_type}'", line)
 
 def check_return_type(var_type, expr_type, line):
     if var_type == expr_type:
