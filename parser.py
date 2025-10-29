@@ -1093,8 +1093,9 @@ def predIndt():
 # запуск парсера
 if FSuccess == ('Lexer', True):
     parseProgram()
-    print("\n--- Parsing Successful ---")
+    print("\nParser: Parsing completed successfully")
     print("\nFinal Symbol Table:")
     import json
 
     print(json.dumps(st.tabName, indent=2, ensure_ascii=False))
+    print("\nSemantic: Semantic analysis completed successfully")
