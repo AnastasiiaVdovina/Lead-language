@@ -21,14 +21,25 @@ def failSem(message, line_num=''):
 #Додає ім'я в таблицю, перевіряє на повторне оголошення (правило 2)
 def insertName(cxt, name, line, attr):
     try:
-        if name in tabName[cxt]:
+        # 1) Перевірка на глобальні дублікати функцій
+        kind = attr[1] if isinstance(attr, tuple) and len(attr) >= 2 else None
+        if kind == 'func':
+            for ctx, symbols in tabName.items():
+                if name in symbols:
+                    existing = symbols[name]
+                    if isinstance(existing, tuple) and len(existing) >= 2 and existing[1] == 'func':
+                        failSem(f"Function '{name}' is already declared globally (function names must be unique)", line)
 
+        # 2) Стандартна перевірка в межах поточного скоупу
+        if name in tabName[cxt]:
             failSem(f"Repeated announcement ‘{name}’ in visibility area '{cxt}'", line)
+
         tabName[cxt][name] = attr
         print(f"Semantic: Inserted {name} into {cxt} with {attr}")
         return True
     except KeyError:
         failSem(f"Unknown visibility area '{cxt}'", line)
+
 
 #Шукає ім'я в поточній та батьківських областях перевіряє на неоголошені (правило 3)
 def findName(name, cxt, line):
