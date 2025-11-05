@@ -1,4 +1,66 @@
-func pow(int a) => int {
-    int ¿ = 5a
-    return ¿
+var a: int= 3
+var asec: int = 4
+var b: float = 2.5
+var bsec: float = 1.4
+var c: bool = true
+var d: string = "Hello"
+
+// Якщо не ініціалізовано — значення за замовчуванням
+var e: int
+var f: float
+var g: bool
+
+//Присвоєння дозволене
+a = 10 + e
+b = 3.5
+d = "World"
+
+//Константа — не можна змінювати
+let PI: float = 3.14
+//PI = 3.1415
+
+// Арифметичні операції
+var sum: int = a + 5
+var prod: float = b * 2.0
+
+// Змішані типи (int + float -> float)
+var mixed: float = asec + b
+
+// Заборонене неявне перетворення float  -> int
+// var wrong: int = b
+
+// Цілочисельне ділення
+var div: int = a / 3
+var divsec: float = b / 2
+
+// Ділення на нуль
+   //var err:int = a / 0
+   //a /= 0
+
+
+// Оператори порівняння
+var qsec: bool = (a > 3)
+var qtwo: bool = (b == 3.5)
+var qthrd: bool = (a > b)
+
+// Функція з типом повернення
+
+var a134: int = 1
+
+func square(int a) => int {
+
+    return a*a + a134
 }
+
+
+// Функція без типу повернення
+func sayHello() {
+    print("Hi")
+}
+
+var s: float = square(a)
+
+var result: int = -(2**3 + 3) * 4 / 23**3**1
+
+
+// кінець програми

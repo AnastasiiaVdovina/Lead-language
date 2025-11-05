@@ -737,10 +737,10 @@ def parseFunctionCall():
             expected_types = param_list
 
         except KeyError:
-            # Ця помилка не має виникнути, якщо `findName` спрацював
+
             st.failSem(f"No scope found for function '{name}'", numLine)
 
-    # 3. Отримуємо реальні типи аргументів з виклику
+    # 3. Отримуємо типи аргументів з виклику
     actual_types = []
     # Якщо є аргументи (наступний токен не ')')
     if numRow <= len_tableOfSymb and getSymb()[1] != ')':
@@ -751,7 +751,7 @@ def parseFunctionCall():
         st.failSem(f"The function ‘{name}’ expects {len(expected_types)} arguments, but received",
                    numLine)
 
-    # 5. Перевіряємо типи (
+    # 5. Перевіряємо типи
     for i, (actual_t, expected_t) in enumerate(zip(actual_types, expected_types)):
         # Використовуємо check_assign, щоб перевірити, чи можна
         # 'actual_t' (тип виразу) присвоїти 'expected_t' (тип параметра)
@@ -794,7 +794,7 @@ def parseReturnStatement():
         st.check_return_type(expected_type, expr_type, ret_line)
 
     else:
-        # Правило 9 (модифіковане):
+        # Правило 9:
         if expected_type != 'void':
             st.failSem(
                 f"The function must return a value of type '{expected_type}', but ‘return’ is used without an expression",
