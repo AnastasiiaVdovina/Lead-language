@@ -70,7 +70,7 @@ tokStateTable = {6:'id', 2: 'intnum', 4: 'floatnum', 15:'assign', 18: 'rel_op', 
 # δ - state-transition_function
 stf={(0,'WhiteSpace'):0,  (0,'Digit'):1, (1,'Digit'):1, (1,'other'):2,
      (1,'dot'):3, (3,'Digit'):3, (3,'other'):4,
-     (0, 'Letter'):5, (5,'Letter'):5, (5,'other'):6,
+     (0, 'Letter'):5, (5,'Letter'):5,(5,'Digit'):5, (5,'other'):6,
      (0, 'other'):7,
      (0, 'OrP'):11, (11,'OrP'):12,
      (11, 'other'):9,
@@ -107,7 +107,7 @@ tableOfSymb={}  # Таблиця символів програми (таблиц
 
 state=initState # поточний стан
 
-f = open('test.my_lang', 'r', encoding="utf-8")
+f = open('test2.my_lang', 'r', encoding="utf-8")
 sourceCode=f.read()
 f.close()
 
