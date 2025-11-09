@@ -2,6 +2,8 @@ from textwrap import indent
 
 from lexer import lex
 from lexer import tableOfSymb
+from lexer import tableOfId
+from lexer import tableOfConst
 
 import symbol_table as st
 
@@ -9,6 +11,8 @@ FSuccess = lex()
 
 print('-' * 50)
 print('tableOfSymb:{0}'.format(tableOfSymb))
+# print('tableOfId:{0}'.format(tableOfId))
+# print('tableOfConst:{0}'.format(tableOfConst))
 print('-' * 50)
 
 # номер рядка таблиці розбору/лексем/символів ПРОГРАМИ tableOfSymb
