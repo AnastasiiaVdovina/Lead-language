@@ -33,6 +33,20 @@ supported_tokens = (
         "cat_op", "stack_op", "colon", "jf", "jump", "CALL", "RET"
 )
 
+type_map = {
+    "intnum": "int",
+    "floatnum": "float",
+    "boolval": "bool",
+    "str": "string",
+    "assign_op": "assign_op",
+    "add_ass_op": "assign_op",
+    "mult_ass_op": "assign_op",
+    "add_op": "math_op",
+    "mult_op": "math_op",
+    "rel_op": "rel_op",
+    "logic_op": "bool_op",
+    "pow_op": "pow_op"
+}
 
 # Program = { Declaration | Statement | Comment } - кореневий нетермінал
 def parseProgram():
@@ -41,7 +55,8 @@ def parseProgram():
     while numRow <= len_tableOfSymb:
         # прочитаємо поточну лексему в таблиці розбору
         numLine, lex, tok = getSymb()
-
+        if tok == 'EOF':
+            return True
         if lex == 'var' or lex == 'let':  # декларація
             parseDeclaration()
         elif lex in ('if', 'for', 'while', 'repeat', 'switch', 'guard', 'input', 'print', 'func',
@@ -203,7 +218,7 @@ def parsePrint():
         parseExpression()
 
     elif tok == 'str':
-        postfixCodeGen('str_literal', (lex, 'string'))  # 'string' - це тип у PSM [cite: 1923, 2124]
+        postfixCodeGen('str', (lex, tok))
         if toView: configToPrint(lex, numRow)
 
         numRow += 1
@@ -790,8 +805,8 @@ def parseExpression():
             return 'bool'  # Правило 13: Результат порівняння - bool
 
     while operator_stack:
-        op, _ = operator_stack.pop()
-        postfixCodeGen('', (op, tok))
+        op = operator_stack.pop()
+        postfixCodeGen('', op)
 
     indent = predIndt()
     return expr_type
@@ -887,8 +902,8 @@ def parseArithmExpression(operator_stack=None, operand_stack=None):
         numLine, lex, tok = buffer
         if tok == 'add_op':
             while operator_stack and should_pop_operator(operator_stack[-1][0], lex):
-                op = operator_stack.pop()[0]
-                postfixCodeGen('', (op,tok))
+                op = operator_stack.pop()
+                postfixCodeGen('', op)
             operator_stack.append((lex, tok))
             numRow += 1
             r_type = parseTerm(operator_stack, operand_stack)
@@ -916,8 +931,8 @@ def parseTerm(operator_stack=None, operand_stack=None):
         numLine, lex, tok = buffer
         if tok == 'mult_op':
             while operator_stack and should_pop_operator(operator_stack[-1][0], lex):
-                op = operator_stack.pop()[0]
-                postfixCodeGen('', (op, tok))
+                op = operator_stack.pop()
+                postfixCodeGen('', op)
             operator_stack.append((lex, tok))
             numRow += 1
             r_type = parsePower(operator_stack, operand_stack)
@@ -946,8 +961,8 @@ def parsePower(operator_stack=None, operand_stack=None):
         numLine, lex, tok = buffer
         if tok == 'pow_op':
             while operator_stack and should_pop_operator(operator_stack[-1][0], lex):
-                op = operator_stack.pop()[0]
-                postfixCodeGen('', (op,tok))
+                op = operator_stack.pop()
+                postfixCodeGen('pow_op', op)
             operator_stack.append((lex, tok))
             numRow += 1
             r_type = parseFactor()
@@ -1250,6 +1265,9 @@ def postfixCodeGen(case,toTran):
             rpn_table.append((lex, 'bool'))
         elif tok == 'str':
             rpn_table.append((lex, 'string'))
+    elif case == 'pow_op':
+        lex,tok = toTran
+        rpn_table.append(('^', tok))
     else:
         lex,tok = toTran
         rpn_table.append((lex,tok))
@@ -1382,9 +1400,11 @@ def parseToken(lexeme, token):
 
 def getSymb():
     if numRow > len_tableOfSymb:
-        return None
-       # failParse('getSymb(): unexpected end of the program', numRow)
+       # return None
+        failParse('getSymb(): unexpected end of the program', numRow)
     numLine, lexeme, token, _ = tableOfSymb[numRow]
+    # if token == 'EOF':
+    #     exit(0)
     return numLine, lexeme, token
 
 
