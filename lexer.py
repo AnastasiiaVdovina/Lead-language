@@ -107,9 +107,13 @@ tableOfSymb={}  # Таблиця символів програми (таблиц
 
 state=initState # поточний стан
 
-f = open('test2.my_lang', 'r', encoding="utf-8")
-sourceCode=f.read()
+f = open('testIF.ll', 'r', encoding="utf-8")
+sourceCode = f.read()
+sourceCode += " \n"
 f.close()
+
+
+lenCode = len(sourceCode) - 1
 
 # FSuccess - ознака успішності/неуспішності розбору
 FSuccess = ('Lexer', False)
@@ -198,15 +202,13 @@ def processing():
     # --- рядкові константи ---
     if state == 20:
         token = getToken(state, lexeme)
-        marker = ''
-        if token == 'str':
-            for key, val in tokenTable.items():
-                if val == 'quote' and lexeme.strip().startswith(key):
-                    marker = key
-                    break
+        formatted_lexeme = f'{lexeme}"'
+
         index = indexIdConst(state, lexeme)
-        print(f"{numLine:<3d} {lexeme+'"':<10s} {token:<10s} {index:<5d}")
-        tableOfSymb[len(tableOfSymb)+1] = (numLine, marker+marker, token, index)
+
+        print(f"{numLine:<3d} {formatted_lexeme:<10s} {token:<10s} {index:<5d}")
+        tableOfSymb[len(tableOfSymb) + 1] = (numLine, formatted_lexeme, token, index)
+
         lexeme = ''
         state = initState
         return

@@ -2,4 +2,5 @@
 
 var a: float = 1 + 1
 var b: float = 2 * 3
+var c: float = a + b
 /* Кінець програми */

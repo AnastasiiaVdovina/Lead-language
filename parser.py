@@ -45,6 +45,8 @@ def parseProgram():
             failParse('incompatibility of instructions',
                       (numLine, lex, tok, ' Declaration | Statement | Comment expected '))
 
+    return True
+
 
 def parseStatement():
     indent = nextIndt()
@@ -87,10 +89,27 @@ def parseWhile():
     indent = nextIndt()
     print(indent + 'parseWhile():')
 
+    # початок перевірки умови
+    m_cond = createLabel()
+    # кінець (вихід) з циклу
+    m_end = createLabel()
+
+    # повертатимемося сюди після кожної ітерації
+    setValLabel(m_cond)
+    rpn_table.append(m_cond)
+    rpn_table.append((':', 'colon'))
+
     parseToken('while', 'keyword')
     parseToken('(', 'brackets_op')
+
     parseBooleanCondition()
+
     parseToken(')', 'brackets_op')
+
+    # Якщо умова 'false', стрибаємо на кінець циклу
+    rpn_table.append(m_end)
+    rpn_table.append(('JF', 'jf'))
+
     parseToken('{', 'brackets_op')
 
     while numRow <= len_tableOfSymb and getSymb()[1] != '}':
@@ -98,7 +117,17 @@ def parseWhile():
 
     parseToken('}', 'brackets_op')
 
+    # Після виконання тіла, стрибаємо назад на перевірку умови
+    rpn_table.append(m_cond)
+    rpn_table.append(('JMP', 'jump'))
+
+    # Встановлюємо кінцеву мітку
+    setValLabel(m_end)
+    rpn_table.append(m_end)
+    rpn_table.append((':', 'colon'))
+
     indent = predIndt()
+
 
 
 # CycleRep = ‘repeat’ ‘{’  Body ‘while’  BoolExpression ‘}’
@@ -106,14 +135,42 @@ def parseRepeatWhile():
     global numRow
     indent = nextIndt()
     print(indent + 'parseRepeatWhile():')
+
+    # Початок тіла циклу (куди повертаємось)
+    m_start_body = createLabel()
+    # Кінець циклу (куди виходимо)
+    m_end = createLabel()
+
+    # Встановлюємо мітку початку тіла
+    setValLabel(m_start_body)
+    rpn_table.append(m_start_body)
+    rpn_table.append((':', 'colon'))
+
     parseToken('repeat', 'keyword')
     parseToken('{', 'brackets_op')
 
     while numRow <= len_tableOfSymb and getSymb()[1] != '}':
         parseStatement()
     parseToken('}', 'brackets_op')
+
     parseToken('while', 'keyword')
+
     parseBooleanCondition()
+
+    # Ми хочемо стрибнути на m_start_body, яукщо 'true'
+    # Якщо умова 'false', стрибаємо на кінець
+    rpn_table.append(m_end)
+    rpn_table.append(('JF', 'jf'))
+
+    # (Якщо ми тут, умова була 'true')
+    # Стрибаємо назад на початок тіла
+    rpn_table.append(m_start_body)
+    rpn_table.append(('JMP', 'jump'))
+
+    # встановлюємо кінцеву мітку
+    setValLabel(m_end)
+    rpn_table.append(m_end)
+    rpn_table.append((':', 'colon'))
 
     indent = predIndt()
 
@@ -125,7 +182,6 @@ def parsePrint():
     print(indent + 'parsePrint():')
 
     parseToken('print', 'keyword')
-
     parseToken('(', 'brackets_op')
 
     numLine, lex, tok = getSymb()
@@ -134,14 +190,18 @@ def parsePrint():
         # Правило 3: Перевірка r-value
         st.findName(lex, st.currentContext, numLine)
         print(indent + 'in line {0} - token {1}'.format(numLine, (lex, tok)))
-        # Ми не робимо numRow += 1, бо parseExpression() це зробить
         parseExpression()
     elif tok == 'str':
+        postfixCodeGen('str_literal', (lex, 'string'))  # 'string' - це тип у PSM [cite: 1923, 2124]
+        if toView: configToPrint(lex, numRow)
+
         numRow += 1
     else:
         # Дозволимо друкувати будь-який вираз
         parseExpression()
 
+    postfixCodeGen('OUT', ('OUT', 'out_op'))
+    if toView: configToPrint('OUT', numRow)  # Для дебагу
     parseToken(')', 'brackets_op')
     indent = predIndt()
 
@@ -155,35 +215,111 @@ def parseSwitch():
     indent = nextIndt()
     print(indent + 'parseSwitch():')
 
-    # switch keyword
+    m_end_switch = createLabel()
+
     parseToken('switch', 'keyword')
 
-    # ідентифікатор (змінна в дужках)
     numLine, lex, tok = getSymb()
-    if tok == 'id':
-        print(indent + ' in line {0} - token {1}'.format(numLine, (lex, tok)))
-        numRow += 1
-    else:
+    if tok != 'id':
         failParse('switch was expected after identifier', (numLine, lex, tok))
 
-    # фігурна дужка відкриття
+    ident_info = (numLine, lex, tok)
+    numRow += 1
+
     parseToken('{', 'brackets_op')
 
-    # цикл по case або default
     while numRow <= len_tableOfSymb:
-        numLine, lex, tok = getSymb()
+        numLine_loop, lex_loop, tok_loop = getSymb()
 
-        if lex == 'case':
-            parseCaseBlock()
-        elif lex == 'default':
+        if lex_loop == 'case':
+            parseCaseBlock(ident_info, m_end_switch)
+
+        elif lex_loop == 'default':
             parseDefaultBlock()
-        elif lex == '}':
-            break
-        else:
-            failParse('case, default або "}" were expected', (numLine, lex, tok))
 
-    # закриваюча дужка
+        elif lex_loop == '}':
+            break  # Кінець 'switch'
+        else:
+            failParse('case, default or "}" was expected', (numLine_loop, lex_loop, tok_loop))
+
+    setValLabel(m_end_switch)
+    rpn_table.append(m_end_switch)
+    rpn_table.append((':', 'colon'))
+
     parseToken('}', 'brackets_op')
+    indent = predIndt()
+
+
+def parseCaseBlock(ident_info, m_end_switch):
+    global numRow
+    indent = nextIndt()
+    print(indent + 'parseCaseBlock():')
+
+    m_next_case = createLabel()
+
+    parseToken('case', 'keyword')
+
+    postfixCodeGen('rval', (ident_info[1], 'r-val'))
+
+    is_negative = False
+    numLine_const, lex_const, tok_const = getSymb()
+
+    if (lex_const, tok_const) == ('-', 'add_op'):
+        is_negative = True
+        parseToken('-', 'add_op')
+        numLine_const, lex_const, tok_const = getSymb()
+
+    if tok_const == 'intnum':
+        print(indent + f' case number: {"-" if is_negative else ""}{lex_const}')
+        postfixCodeGen('rval', (lex_const, tok_const))
+        numRow += 1
+    else:
+        failParse('An integer number was expected after case', (numLine_const, lex_const, tok_const))
+
+    if is_negative:
+        postfixCodeGen('NEG', ('NEG', 'neg_op'))
+
+    postfixCodeGen('==', ('==', 'rel_op'))
+
+    # Додаємо m_next_case JF (перейти до наступного 'case', якщо НЕ дорівнює)
+    rpn_table.append(m_next_case)
+    rpn_table.append(('JF', 'jf'))
+
+    parseToken(':', 'punct')
+
+    while numRow <= len_tableOfSymb:
+        nextLex = getSymb()[1]
+        if nextLex in ('case', 'default', '}'):
+            break
+        parseStatement()
+
+    rpn_table.append(m_end_switch)
+    rpn_table.append(('JMP', 'jump'))
+
+
+    setValLabel(m_next_case)
+    rpn_table.append(m_next_case)
+    rpn_table.append((':', 'colon'))
+
+    indent = predIndt()
+
+
+
+#по аналогії елс
+def parseDefaultBlock():
+    global numRow
+    indent = nextIndt()
+    print(indent + 'parseDefaultBlock():')
+
+    parseToken('default', 'keyword')
+    parseToken(':', 'punct')
+
+    while numRow <= len_tableOfSymb:
+        nextLex = getSymb()[1]
+        if nextLex == '}':
+            break
+        parseStatement()
+
     indent = predIndt()
 
 
@@ -191,6 +327,11 @@ def parseGuard():
     global numRow
     indent = nextIndt()
     print(indent + 'parseGuard():')
+    # Створюємо дві мітки
+    # m_else: куди ми стрибаємо, якщо умова 'false'
+    m_else = createLabel()
+    # m_end: куди ми стрибаємо, якщо умова 'true' (пропускаючи 'else')
+    m_end = createLabel()
 
     # guard keyword
     parseToken('guard', 'keyword')
@@ -201,14 +342,34 @@ def parseGuard():
     # )
     parseToken(')', 'brackets_op')
 
+    # Якщо умова 'false', стрибаємо на 'm_else:' (де починається блок else)
+    rpn_table.append(m_else)
+    rpn_table.append(('JF', 'jf'))
+
+    # Якщо умова була 'true', ми доходимо сюди.
+    # Безумовно стрибаємо в кінець (пропускаємо блок 'else')
+    rpn_table.append(m_end)
+    rpn_table.append(('JMP', 'jump'))
+
     # else
     parseToken('else', 'keyword')
 
+    # Це початок блоку else, куди ми стрибали, якщо умова 'false'
+    setValLabel(m_else)
+    rpn_table.append(m_else)
+    rpn_table.append((':', 'colon'))
+
     # { StatementList }
     parseToken('{', 'brackets_op')
+
     while numRow <= len_tableOfSymb and getSymb()[1] != '}':
         parseStatement()
     parseToken('}', 'brackets_op')
+
+    # Це кінець всього 'guard', куди ми стрибали, якщо умова 'true'
+    setValLabel(m_end)
+    rpn_table.append(m_end)
+    rpn_table.append((':', 'colon'))
 
     indent = predIndt()
 
@@ -218,13 +379,21 @@ def parseFor():
     indent = nextIndt()
     print(indent + 'parseFor():')
 
+    # m_cond:   Початок перевірки умови
+    # m_incr:   Початок коду інкременту
+    # m_body:   Початок тіла циклу
+    # m_end:    Кінець (вихід) з циклу
+    m_cond = createLabel()
+    m_incr = createLabel()
+    m_body = createLabel()
+    m_end = createLabel()
+
     # for keyword
     parseToken('for', 'keyword')
 
     # (
     parseToken('(', 'brackets_op')
 
-    # initialization
     numLine, lex, tok = getSymb()
     if tok == 'id':
         id_info = (numLine, lex, tok)
@@ -239,13 +408,30 @@ def parseFor():
     # ;
     parseToken(';', 'punct')
 
-    # condition
+    #Встановлюємо мітку умови
+    setValLabel(m_cond)
+    rpn_table.append(m_cond)
+    rpn_table.append((':', 'colon'))
+
     parseBooleanCondition()
+
+    # Переходи після умови
+    # Якщо умова 'false' стрибаємо на кінець
+    rpn_table.append(m_end)
+    rpn_table.append(('JF', 'jf'))
+    # Якщо умова 'true' стрибаємо на тіло
+    rpn_table.append(m_body)
+    rpn_table.append(('JMP', 'jump'))
 
     # ;
     parseToken(';', 'punct')
 
-    # increment
+    # Встановлюємо мітку інкременту
+    # Ми стрибнемо сюди ПІСЛЯ тіла циклу
+    setValLabel(m_incr)
+    rpn_table.append(m_incr)
+    rpn_table.append((':', 'colon'))
+
     numLine, lex, tok = getSymb()
     if tok == 'id':
         id_info = (numLine, lex, tok)
@@ -255,64 +441,35 @@ def parseFor():
     else:
         failParse('for increment expected', (numLine, lex, tok, 'identifier'))
 
+    # Стрибаємо назад на умову
+    rpn_table.append(m_cond)
+    rpn_table.append(('JMP', 'jump'))
+
     # )
     parseToken(')', 'brackets_op')
 
-    # body { StatementList }
+    # Встановлюємо мітку тіла
+    setValLabel(m_body)
+    rpn_table.append(m_body)
+    rpn_table.append((':', 'colon'))
+
     parseToken('{', 'brackets_op')
     while numRow <= len_tableOfSymb and getSymb()[1] != '}':
         parseStatement()
     parseToken('}', 'brackets_op')
 
-    indent = predIndt()
+    # Стрибаємо на інкремент
+    # Це відбувається ПІСЛЯ виконання тіла
+    rpn_table.append(m_incr)
+    rpn_table.append(('JMP', 'jump'))
 
-
-def parseDefaultBlock():
-    global numRow
-    indent = nextIndt()
-    print(indent + 'parseDefaultBlock():')
-
-    parseToken('default', 'keyword')
-    parseToken(':', 'punct')
-
-    # Виконуємо всі statements поки не зустрінемо '}'
-    while numRow <= len_tableOfSymb:
-        nextLex = getSymb()[1]
-        if nextLex == '}':
-            break
-        parseStatement()
+    # становлюємо кінцеву мітку
+    setValLabel(m_end)
+    rpn_table.append(m_end)
+    rpn_table.append((':', 'colon'))
 
     indent = predIndt()
 
-
-def parseCaseBlock():
-    global numRow
-    indent = nextIndt()
-    print(indent + 'parseCaseBlock():')
-
-    parseToken('case', 'keyword')
-
-    numLine, lex, tok = getSymb()
-    if lex == '-':
-        parseToken(lex, 'add_op')
-        numLine, lex, tok = getSymb()
-
-    if tok == 'intnum':
-        print(indent + f' case number: {lex}')
-        numRow += 1
-    else:
-        failParse('An integer number was expected after case', (numLine, lex, tok))
-
-    parseToken(':', 'punct')
-
-    # Statements до наступного case/default/закриття
-    while numRow <= len_tableOfSymb:
-        nextLex = getSymb()[1]
-        if nextLex in ('case', 'default', '}'):
-            break
-        parseStatement()
-
-    indent = predIndt()
 
 
 def parseIf():
@@ -320,28 +477,93 @@ def parseIf():
     indent = nextIndt()
     print(indent + 'parseIf():')
 
-    # Використовуємо parseToken для чистоти коду
+    # Ця мітка буде встановлена тількти в самому кінці
+    m_end_chain = createLabel()
+    # Мітка для переходу на наступну умову (else if) або на else
+    m_next_cond = createLabel()
+
     parseToken('if', 'keyword')
     parseToken('(', 'brackets_op')
     parseBooleanCondition()
+
+    rpn_table.append(m_next_cond)
+    rpn_table.append(('JF', 'jf'))
+
     parseToken(')', 'brackets_op')
     parseToken('{', 'brackets_op')
 
     while numRow <= len_tableOfSymb and getSymb()[1] != '}':
         parseStatement()
-
     parseToken('}', 'brackets_op')
 
-    # Перевіряємо наявність 'else'
+    rpn_table.append(m_end_chain)
+    rpn_table.append(('JMP', 'jump'))
+
+    setValLabel(m_next_cond)
+    rpn_table.append(m_next_cond)
+    rpn_table.append((':', 'colon'))
+
+    if numRow <= len_tableOfSymb and getSymb()[1] == 'else':
+        print(indent + '  founded else')
+        parseToken('else', 'keyword')
+        # обробка else if через доп функцію
+        if numRow <= len_tableOfSymb and getSymb()[1] == 'if':
+            parseElseIfBlock(m_end_chain)  
+
+        # Обробка звичайного 'else'
+        else:
+            parseToken('{', 'brackets_op')
+            while numRow <= len_tableOfSymb and getSymb()[1] != '}':
+                parseStatement()
+            parseToken('}', 'brackets_op')
+
+    setValLabel(m_end_chain)
+    rpn_table.append(m_end_chain)
+    rpn_table.append((':', 'colon'))
+
+    indent = predIndt()
+
+
+# допоміжна функція для обробки ланцюжка else if
+def parseElseIfBlock(m_end_chain):
+    global numRow
+    indent = nextIndt()
+    print(indent + 'parseElseIfBlock():')
+
+    # Мітка для переходу на наступну умову (else if) або на else
+    m_next_cond = createLabel()
+
+    parseToken('if', 'keyword')
+    parseToken('(', 'brackets_op')
+
+    parseBooleanCondition()
+
+    rpn_table.append(m_next_cond)
+    rpn_table.append(('JF', 'jf'))
+
+    parseToken(')', 'brackets_op')
+    parseToken('{', 'brackets_op')
+
+    while numRow <= len_tableOfSymb and getSymb()[1] != '}':
+        parseStatement()
+    parseToken('}', 'brackets_op')
+
+    rpn_table.append(m_end_chain)
+    rpn_table.append(('JMP', 'jump'))
+
+    setValLabel(m_next_cond)
+    rpn_table.append(m_next_cond)
+    rpn_table.append((':', 'colon'))
+
+    # Рекурсивна обробка наступного 'else if' / 'else'
     if numRow <= len_tableOfSymb and getSymb()[1] == 'else':
         print(indent + '  founded else')
         parseToken('else', 'keyword')
 
-        # Перевіряємо, чи це 'else if'
         if numRow <= len_tableOfSymb and getSymb()[1] == 'if':
-            parseIf()  # Рекурсивний виклик для обробки 'else if'
+            parseElseIfBlock(m_end_chain) 
         else:
-            # Це звичайний 'else', розбираємо його блок
+            # Це звичайний 'else'
             parseToken('{', 'brackets_op')
             while numRow <= len_tableOfSymb and getSymb()[1] != '}':
                 parseStatement()
@@ -1018,6 +1240,8 @@ def parseInput():
     parseToken('(', 'brackets_op')
     parseToken(')', 'brackets_op')
 
+    postfixCodeGen('INP', ('INP', 'inp_op'))
+    if toView: configToPrint('INP', numRow)
     indent = predIndt()
     return 'string'  # Введення з клавіатури - це завжди рядок
 
@@ -1093,13 +1317,90 @@ def predIndt():
     indt -= stepIndt
     return ' ' * indt
 
+def setValLabel(lbl):
+    global labelTable
+    lex,_tok = lbl
+    labelTable[lex] = len(rpn_table)
+    return True
+
+def createLabel():
+    global labelTable
+    nmb = len(labelTable)+1
+    lexeme = "m"+str(nmb)
+    val = labelTable.get(lexeme)
+    if val is None:
+        labelTable[lexeme] = 'val_undef'
+        tok = 'label'
+    else:
+        tok = 'Labels conflict'
+        print(tok)
+        exit(1003)
+
+    return (lexeme,tok)
+
+def generate_postfix_file(filename, vars_table, rpn_table, labelTable=None):
+    output_path = f"{filename}.postfix"
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(".target: Postfix Machine\n")
+        f.write(".version: 0.3\n\n")
+
+        f.write(".vars(\n")
+        for scope, vars_dict in vars_table.items():
+            for var_name, attributes in vars_dict.items():
+                if var_name == "declIn":
+                    continue
+                # attributes[2] це тип int, float, bool, string
+                f.write(f"\t{var_name}\t{attributes[2]}\n")
+        f.write(")\n\n")
+
+        #для міток. окремо треба штуку зробити для кожної малої функції(як у прикладах psm)
+        f.write(".labels(\n")
+        if labelTable:
+            for lbl, addr in labelTable.items():
+                f.write(f"\t{lbl}\t{addr}\n")
+        f.write(")\n\n")
+
+        f.write(".code(\n")
+        for lexeme, token_type in rpn_table:
+            f.write(f"\t{lexeme:<10}\t{token_type}\n")
+        f.write(")\n")
+
+    print(f"Postfix file was generated: {filename}")
+
+
+def compileToPostfix(fileName):
+    global len_tableOfSymb , FSuccess
+    print('compileToPostfix: lexer Start Up\n')
+    FSuccess = lex()
+    print('compileToPostfix: lexer-FSuccess ={0}'.format(FSuccess))
+    # чи був успiшним лексичний розбiр
+    if ('Lexer',True) == FSuccess:
+        len_tableOfSymb = len(tableOfSymb)
+        print('-'*55)
+        print('compileToPostfix: Start Up compiler = parser + codeGenerator\n')
+        FSuccess = False
+        FSuccess = parseProgram()
+        if FSuccess == (True):
+            generate_postfix_file(fileName,st.tabName, rpn_table, labelTable)
+        if not FSuccess:
+            print(f"Postfix-код не було збережено у файл {fileName}")
+    return FSuccess
+
+def configToPrint(lex,numRow):
+    stage = '\nTranslation step\n'
+    stage += 'lex: \'{0}\'\n'
+    stage += 'rpn_table = {3}\n'
+    print(stage.format(lex,numRow,str(tableOfSymb[numRow]),str(rpn_table)))
+
 
 # запуск парсера
-if FSuccess == ('Lexer', True):
-    parseProgram()
-    print("\nParser: Parsing completed successfully")
-    print("\nFinal Symbol Table:")
-    import json
 
-    print(json.dumps(st.tabName, indent=2, ensure_ascii=False))
-    print("\nSemantic: Semantic analysis completed successfully")
+compileToPostfix('testIF.ll')
+# if FSuccess == ('Lexer', True):
+#     parseProgram()
+#     print("\nParser: Parsing completed successfully")
+#     print("\nFinal Symbol Table:")
+#     import json
+#
+#     print(json.dumps(st.tabName, indent=2, ensure_ascii=False))
+#     print("\nSemantic: Semantic analysis completed successfully")
