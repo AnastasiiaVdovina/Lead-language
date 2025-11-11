@@ -23,6 +23,31 @@ numRow = 1
 len_tableOfSymb = len(tableOfSymb)
 print(('len_tableOfSymb', len_tableOfSymb))
 
+labelTable = {}
+rpn_table = []
+toView = True
+supported_tokens = (
+        "int", "float", "bool", "string", "l-val", "r-val",
+        "label", "colon", "assign_op", "math_op", "rel_op",
+        "pow_op", "out_op", "inp_op", "conv", "bool_op",
+        "cat_op", "stack_op", "colon", "jf", "jump", "CALL", "RET"
+)
+
+type_map = {
+    "intnum": "int",
+    "floatnum": "float",
+    "boolval": "bool",
+    "str": "string",
+    "assign_op": "assign_op",
+    "add_ass_op": "assign_op",
+    "mult_ass_op": "assign_op",
+    "add_op": "math_op",
+    "mult_op": "math_op",
+    "rel_op": "rel_op",
+    "logic_op": "bool_op",
+    "pow_op": "pow_op"
+}
+
 
 # Program = { Declaration | Statement | Comment } - кореневий нетермінал
 def parseProgram():
@@ -191,6 +216,7 @@ def parsePrint():
         st.findName(lex, st.currentContext, numLine)
         print(indent + 'in line {0} - token {1}'.format(numLine, (lex, tok)))
         parseExpression()
+
     elif tok == 'str':
         postfixCodeGen('str_literal', (lex, 'string'))  # 'string' - це тип у PSM [cite: 1923, 2124]
         if toView: configToPrint(lex, numRow)
@@ -604,10 +630,9 @@ def parseDeclaration():
 
     if numRow <= len_tableOfSymb and getSymb()[2] == 'assign_op':
         parseToken('=', 'assign_op')
-
         # 4. Отримуємо тип виразу
         expr_type = parseExpression()
-
+        postfixCodeGen('', ('=', 'assign_op'))
         # 5. Перевіряємо типи (Правила 5, 16, 17)
         st.check_assign(declared_type, expr_type, numLine)
 
@@ -656,7 +681,8 @@ def parseIdentList():
             numRow += 1
         else:
             break
-
+    for numLine, lex, tok in id_list:
+        postfixCodeGen('lval', (lex,tok))
     indent = predIndt()
     return id_list  # Повертаємо список
 
@@ -692,6 +718,50 @@ def parseBooleanCondition():
     indent = predIndt()
     # Нічого не повертаємо, просто перевіряємо
 
+def precedence(operator):
+    priorities = {
+        '**': 10,
+
+        '!': 9,
+        #'@': 9,  # унарний мінус
+
+        '*': 8,
+        '/': 8,
+
+        '+': 7,
+        '-': 7,
+
+        '<=': 6,
+        '>': 6,
+        '>=': 6,
+        '==': 6,
+        '!=': 6,
+        '<': 6,
+
+        '&&': 5,
+        '||': 4,
+
+        '=': 3,
+        # для складного присвоювання потрібна додаткова обробка
+        '+=': 3,
+        '-=': 3,
+        '*=': 3,
+        '/=': 3,
+
+        ')': 2,
+        '(': 1
+    }
+    return priorities.get(operator, 0)
+
+
+def should_pop_operator(top_op, current_op):
+    top_precedence = precedence(top_op)
+    current_precedence = precedence(current_op)
+
+    if current_op == '**':
+        return top_precedence > current_precedence
+    return top_precedence >= current_precedence
+
 
 def parseExpression():
     global numRow
@@ -701,15 +771,21 @@ def parseExpression():
 
     if tok == 'boolval' or lex == '!':
         expr_type = parseBoolExpression()
+        postfixCodeGen("const", (lex,tok))
         indent = predIndt()
         return expr_type
     elif tok == 'str':
         numRow += 1
+        postfixCodeGen("const", (lex, tok))
         indent = predIndt()
+
         return 'string'
 
     # Інакше це арифметичний вираз...
-    l_type = parseArithmExpression()
+    operator_stack = []
+    operand_stack = []
+
+    expr_type = parseArithmExpression(operator_stack, operand_stack)
 
     # ...який може бути частиною порівняння
     if numRow <= len_tableOfSymb:
@@ -719,17 +795,21 @@ def parseExpression():
             numRow += 1
             print(indent + f'  in line {numLine} - comparison token {(lex, tok)}')
 
-            r_type = parseArithmExpression()
+            r_type = parseArithmExpression(operator_stack, operand_stack)
 
             # Правила 12, 14: Перевірка типів для операторів порівняння
-            st.check_rel_op(l_type, op_lex, r_type, op_line)
-
+            st.check_rel_op(expr_type, op_lex, r_type, op_line)
+            postfixCodeGen("", (op_lex, "rel_op"))
+            expr_type = 'bool'
             indent = predIndt()
             return 'bool'  # Правило 13: Результат порівняння - bool
 
-    indent = predIndt()
-    return l_type  # Якщо порівняння не було, повертаємо тип арифм. виразу
+    while operator_stack:
+        op, _ = operator_stack.pop()
+        postfixCodeGen('', (op, tok))
 
+    indent = predIndt()
+    return expr_type
 
 # BoolExpression = BoolTerm { ("||") BoolTerm }
 def parseBoolExpression():
@@ -798,81 +878,91 @@ def parseBoolFactor():
 
 
 # ArithmExpression = [Sign] Term { ("+" | "-") Term }
-def parseArithmExpression():
+def parseArithmExpression(operator_stack=None, operand_stack=None):
     global numRow
     indent = nextIndt()
     print(indent + 'parseArithmExpression():')
 
+    if operator_stack is None: operator_stack = []
+    if operand_stack is None: operand_stack = []
+
+    # Перевірка на унарний знак
     numLine, lex, tok = getSymb()
     if (lex, tok) in (('+', 'add_op'), ('-', 'add_op')):
         parseSign()
+        # Можна додати @ для унарного мінуса в rpn_table
+        postfixCodeGen('', ('NEG', 'math_op'))
 
-    l_type = parseTerm()
-    F = True
-    while F and numRow <= len_tableOfSymb:
+    l_type = parseTerm(operator_stack, operand_stack)
+
+    while True:
         numLine, lex, tok = getSymb()
         if tok == 'add_op':
-            op_line, op_lex = numLine, lex
+            while operator_stack and should_pop_operator(operator_stack[-1][0], lex):
+                op = operator_stack.pop()[0]
+                postfixCodeGen('', (op,tok))
+            operator_stack.append((lex, tok))
             numRow += 1
-            print(indent + 'in line {0} - token {1}'.format(numLine, (lex, tok)))
-            r_type = parseTerm()
-
-            # Правило 15: Перевірка типів для додавання/віднімання
-            l_type = st.check_arithm_op(l_type, op_lex, r_type, op_line)
+            r_type = parseTerm(operator_stack, operand_stack)
+            l_type = st.check_arithm_op(l_type, lex, r_type, numLine)
         else:
-            F = False
+            break
 
     indent = predIndt()
     return l_type
 
-
-def parseTerm():
+def parseTerm(operator_stack=None, operand_stack=None):
     global numRow
     indent = nextIndt()
     print(indent + 'parseTerm():')
-    l_type = parsePower()
-    F = True
-    while F and numRow <= len_tableOfSymb:
+
+    if operator_stack is None: operator_stack = []
+    if operand_stack is None: operand_stack = []
+
+    l_type = parsePower(operator_stack, operand_stack)
+
+    while True:
         numLine, lex, tok = getSymb()
         if tok == 'mult_op':
-            op_line, op_lex = numLine, lex
+            while operator_stack and should_pop_operator(operator_stack[-1][0], lex):
+                op = operator_stack.pop()[0]
+                postfixCodeGen('', (op, tok))
+            operator_stack.append((lex, tok))
             numRow += 1
-            print(indent + 'in line {0} - token {1}'.format(numLine, (lex, tok)))
-
-            # Правило 10: Ділення на нуль (проста перевірка на літерал)
-            r_numLine, r_lex, r_tok = getSymb()
-            if op_lex == '/' and r_tok in ('intnum', 'floatnum') and float(r_lex) == 0.0 :
-                st.failSem("Division by zero (literal)", op_line)
-            r_type = parsePower()
-
-            # Перевірка типів для множення/ділення
-            l_type = st.check_arithm_op(l_type, op_lex, r_type, op_line)
+            r_type = parsePower(operator_stack, operand_stack)
+            l_type = st.check_arithm_op(l_type, lex, r_type, numLine)
         else:
-            F = False
+            break
+
     indent = predIndt()
     return l_type
 
 
-def parsePower():
+def parsePower(operator_stack=None, operand_stack=None):
     global numRow
     indent = nextIndt()
     print(indent + 'parsePower():')
+
+    if operator_stack is None: operator_stack = []
+    if operand_stack is None: operand_stack = []
+
     l_type = parseFactor()
-    F = True
-    while F and numRow <= len_tableOfSymb:
+
+    while True:
         numLine, lex, tok = getSymb()
         if tok == 'pow_op':
+            while operator_stack and should_pop_operator(operator_stack[-1][0], lex):
+                op = operator_stack.pop()[0]
+                postfixCodeGen('', (op,tok))
+            operator_stack.append((lex, tok))
             numRow += 1
-            print(indent + 'in line {0} - token {1}'.format(numLine, (lex, tok)))
             r_type = parseFactor()
-
-            # Перевірка типів для степеня
             l_type = st.check_arithm_op(l_type, lex, r_type, numLine)
         else:
-            F = False
+            break
+
     indent = predIndt()
     return l_type
-
 
 def parseFactor():
     global numRow
@@ -884,6 +974,7 @@ def parseFactor():
 
     if tok in ('intnum', 'floatnum'):
         print(indent + 'in line {0} - token {1}'.format(numLine, (lex, tok)))
+        postfixCodeGen('const',(lex,tok))
         numRow += 1
         factor_type = 'int' if tok == 'intnum' else 'float'
     elif tok == 'id':
@@ -901,6 +992,7 @@ def parseFactor():
             #     st.failSem(f"Використання неініціалізованої змінної '{lex}'", numLine)
 
             print(indent + 'в рядку {0} - токен {1}'.format(numLine, (lex, tok)))
+            postfixCodeGen('rval', (lex, tok))
             numRow += 1
             factor_type = id_type
 
@@ -1147,6 +1239,27 @@ def parseSign():
 
     indent = predIndt()
 
+def postfixCodeGen(case,toTran):
+    if case == 'lval':
+        lex,tok = toTran
+        rpn_table.append((lex,'l-val'))
+    elif case == 'rval':
+        lex,tok = toTran
+        rpn_table.append((lex,'r-val'))
+    elif case == 'const':
+        lex,tok = toTran
+        if tok == 'intnum':
+            rpn_table.append((lex,'int'))
+        elif tok == 'floatnum':
+            rpn_table.append((lex,'float'))
+        elif tok == 'boolval':
+            rpn_table.append((lex, 'bool'))
+        elif tok == 'str':
+            rpn_table.append((lex, 'string'))
+    else:
+        lex,tok = toTran
+        rpn_table.append((lex,tok))
+
 
 def parseAssign(id_info):
     global numRow
@@ -1169,7 +1282,11 @@ def parseAssign(id_info):
     if assign_tok not in ('assign_op', 'add_ass_op', 'mult_ass_op'):
         failParse('token mismatch', (assign_line, assign_lex, assign_tok, 'assignment operator (=, +=, *=, etc)'))
 
+    postfixCodeGen('lval', (id_lex, id_tok))
     parseToken(assign_lex, assign_tok)
+
+
+    if toView: configToPrint(id_lex, numRow)
 
     # 4. Перевіряємо, чи це input()
     numLine, lex, tok = getSymb()
@@ -1180,7 +1297,8 @@ def parseAssign(id_info):
             st.failSem(f"input() can only be assigned to ‘int’, ‘float’, or ‘string’, but not to'{id_type}'",
                        assign_line)
         print(f"Semantic: Semantically accepting input() into var of type '{id_type}'")
-
+        # postfixCodeGen('', ('input', 'func'))
+        # postfixCodeGen('', ('=', 'assign_op'))
     else:
         # 5. Або це звичайний вираз
         expr_type = parseExpression()
@@ -1189,7 +1307,8 @@ def parseAssign(id_info):
             # Просте присвоєння (a = b)
             # (Правила 16, 17)
             st.check_assign(id_type, expr_type, assign_line)
-
+            rpn_table.append(('=', 'assign_op'))
+            if toView: configToPrint(lex, numRow)
         elif assign_tok in ('add_ass_op', 'mult_ass_op'):
             # Складне присвоєння (a += b)
 
@@ -1219,7 +1338,9 @@ def parseAssign(id_info):
             # Наприклад, a(int) += b(float) дасть result_type 'float'
             # і check_assign('int', 'float') видасть помилку.
             st.check_assign(id_type, result_type, assign_line)
-
+            # postfixCodeGen('lval', (id_lex, id_tok))  # a
+            # postfixCodeGen('', (arith_op, 'op'))  # +
+            # postfixCodeGen('', ('=', 'assign_op'))  # =
         else:
             st.failSem(f"Unknown assignment operator type '{assign_tok}'", assign_line)
 
