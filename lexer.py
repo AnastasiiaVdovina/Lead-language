@@ -1,4 +1,4 @@
- 	
+
 # Таблиця лексем мови
 tokenTable = {
     # булеві константи
@@ -107,13 +107,9 @@ tableOfSymb={}  # Таблиця символів програми (таблиц
 
 state=initState # поточний стан
 
-f = open('testIF.ll', 'r', encoding="utf-8")
-sourceCode = f.read()
-sourceCode += " \n"
+f = open('test.my_lang', 'r', encoding="utf-8")
+sourceCode=f.read()
 f.close()
-
-
-lenCode = len(sourceCode) - 1
 
 # FSuccess - ознака успішності/неуспішності розбору
 FSuccess = ('Lexer', False)
@@ -202,17 +198,19 @@ def processing():
     # --- рядкові константи ---
     if state == 20:
         token = getToken(state, lexeme)
-        formatted_lexeme = f'{lexeme}"'
-
+        marker = ''
+        # if token == 'str':
+        #     for key, val in tokenTable.items():
+        #         if val == 'quote' and lexeme.strip().startswith(key):
+        #             marker = key
+        #             break
+        lexeme = lexeme[1:]
         index = indexIdConst(state, lexeme)
-
-        print(f"{numLine:<3d} {formatted_lexeme:<10s} {token:<10s} {index:<5d}")
-        tableOfSymb[len(tableOfSymb) + 1] = (numLine, formatted_lexeme, token, index)
-
+        print(f"{numLine:<3d} {lexeme:<10s} {token:<10s} {index:<5d}")
+        tableOfSymb[len(tableOfSymb) + 1] = (numLine, lexeme, token, index)
         lexeme = ''
         state = initState
         return
-
 
     # --- коментарі однорядкові ---
     if state == 31:
@@ -286,8 +284,8 @@ def fail():
   if state == 21:
     print(f'ERROR 21: unexpected character  was met -> "{char}" in line {numLine}. Multiline strings are not allowed. ')
     exit(21)
-  
-  
+
+
 def is_final(state):
   if (state in F):
     return True
