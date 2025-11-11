@@ -33,21 +33,6 @@ supported_tokens = (
         "cat_op", "stack_op", "colon", "jf", "jump", "CALL", "RET"
 )
 
-type_map = {
-    "intnum": "int",
-    "floatnum": "float",
-    "boolval": "bool",
-    "str": "string",
-    "assign_op": "assign_op",
-    "add_ass_op": "assign_op",
-    "mult_ass_op": "assign_op",
-    "add_op": "math_op",
-    "mult_op": "math_op",
-    "rel_op": "rel_op",
-    "logic_op": "bool_op",
-    "pow_op": "pow_op"
-}
-
 
 # Program = { Declaration | Statement | Comment } - кореневий нетермінал
 def parseProgram():
@@ -303,7 +288,7 @@ def parseCaseBlock(ident_info, m_end_switch):
         failParse('An integer number was expected after case', (numLine_const, lex_const, tok_const))
 
     if is_negative:
-        postfixCodeGen('NEG', ('NEG', 'neg_op'))
+        postfixCodeGen('NEG', ('NEG', 'math_op'))
 
     postfixCodeGen('==', ('==', 'rel_op'))
 
@@ -890,13 +875,16 @@ def parseArithmExpression(operator_stack=None, operand_stack=None):
     numLine, lex, tok = getSymb()
     if (lex, tok) in (('+', 'add_op'), ('-', 'add_op')):
         parseSign()
-        # Можна додати @ для унарного мінуса в rpn_table
+        # Уточнити штуку
         postfixCodeGen('', ('NEG', 'math_op'))
 
     l_type = parseTerm(operator_stack, operand_stack)
 
     while True:
-        numLine, lex, tok = getSymb()
+        buffer = getSymb()
+        if not buffer:
+            break
+        numLine, lex, tok = buffer
         if tok == 'add_op':
             while operator_stack and should_pop_operator(operator_stack[-1][0], lex):
                 op = operator_stack.pop()[0]
@@ -922,7 +910,10 @@ def parseTerm(operator_stack=None, operand_stack=None):
     l_type = parsePower(operator_stack, operand_stack)
 
     while True:
-        numLine, lex, tok = getSymb()
+        buffer = getSymb()
+        if not buffer:
+            break
+        numLine, lex, tok = buffer
         if tok == 'mult_op':
             while operator_stack and should_pop_operator(operator_stack[-1][0], lex):
                 op = operator_stack.pop()[0]
@@ -949,7 +940,10 @@ def parsePower(operator_stack=None, operand_stack=None):
     l_type = parseFactor()
 
     while True:
-        numLine, lex, tok = getSymb()
+        buffer = getSymb()
+        if not buffer:
+            break
+        numLine, lex, tok = buffer
         if tok == 'pow_op':
             while operator_stack and should_pop_operator(operator_stack[-1][0], lex):
                 op = operator_stack.pop()[0]
@@ -1388,7 +1382,8 @@ def parseToken(lexeme, token):
 
 def getSymb():
     if numRow > len_tableOfSymb:
-        failParse('getSymb(): unexpected end of the program', numRow)
+        return None
+       # failParse('getSymb(): unexpected end of the program', numRow)
     numLine, lexeme, token, _ = tableOfSymb[numRow]
     return numLine, lexeme, token
 
