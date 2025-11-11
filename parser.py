@@ -23,8 +23,16 @@ numRow = 1
 len_tableOfSymb = len(tableOfSymb)
 print(('len_tableOfSymb', len_tableOfSymb))
 
-labelTable = {}
-rpn_table = []
+
+main_labelTable = {}
+main_rpn_table = []
+base_file_name = ""
+
+current_labelTable = None
+current_rpn_table = None
+
+toView = True
+
 toView = True
 supported_tokens = (
         "int", "float", "bool", "string", "l-val", "r-val",
@@ -121,8 +129,8 @@ def parseWhile():
 
     # повертатимемося сюди після кожної ітерації
     setValLabel(m_cond)
-    rpn_table.append(m_cond)
-    rpn_table.append((':', 'colon'))
+    current_rpn_table.append(m_cond)
+    current_rpn_table.append((':', 'colon'))
 
     parseToken('while', 'keyword')
     parseToken('(', 'brackets_op')
@@ -132,8 +140,8 @@ def parseWhile():
     parseToken(')', 'brackets_op')
 
     # Якщо умова 'false', стрибаємо на кінець циклу
-    rpn_table.append(m_end)
-    rpn_table.append(('JF', 'jf'))
+    current_rpn_table.append(m_end)
+    current_rpn_table.append(('JF', 'jf'))
 
     parseToken('{', 'brackets_op')
 
@@ -143,13 +151,13 @@ def parseWhile():
     parseToken('}', 'brackets_op')
 
     # Після виконання тіла, стрибаємо назад на перевірку умови
-    rpn_table.append(m_cond)
-    rpn_table.append(('JMP', 'jump'))
+    current_rpn_table.append(m_cond)
+    current_rpn_table.append(('JMP', 'jump'))
 
     # Встановлюємо кінцеву мітку
     setValLabel(m_end)
-    rpn_table.append(m_end)
-    rpn_table.append((':', 'colon'))
+    current_rpn_table.append(m_end)
+    current_rpn_table.append((':', 'colon'))
 
     indent = predIndt()
 
@@ -168,8 +176,8 @@ def parseRepeatWhile():
 
     # Встановлюємо мітку початку тіла
     setValLabel(m_start_body)
-    rpn_table.append(m_start_body)
-    rpn_table.append((':', 'colon'))
+    current_rpn_table.append(m_start_body)
+    current_rpn_table.append((':', 'colon'))
 
     parseToken('repeat', 'keyword')
     parseToken('{', 'brackets_op')
@@ -184,18 +192,18 @@ def parseRepeatWhile():
 
     # Ми хочемо стрибнути на m_start_body, яукщо 'true'
     # Якщо умова 'false', стрибаємо на кінець
-    rpn_table.append(m_end)
-    rpn_table.append(('JF', 'jf'))
+    current_rpn_table.append(m_end)
+    current_rpn_table.append(('JF', 'jf'))
 
     # (Якщо ми тут, умова була 'true')
     # Стрибаємо назад на початок тіла
-    rpn_table.append(m_start_body)
-    rpn_table.append(('JMP', 'jump'))
+    current_rpn_table.append(m_start_body)
+    current_rpn_table.append(('JMP', 'jump'))
 
     # встановлюємо кінцеву мітку
     setValLabel(m_end)
-    rpn_table.append(m_end)
-    rpn_table.append((':', 'colon'))
+    current_rpn_table.append(m_end)
+    current_rpn_table.append((':', 'colon'))
 
     indent = predIndt()
 
@@ -269,8 +277,8 @@ def parseSwitch():
             failParse('case, default or "}" was expected', (numLine_loop, lex_loop, tok_loop))
 
     setValLabel(m_end_switch)
-    rpn_table.append(m_end_switch)
-    rpn_table.append((':', 'colon'))
+    current_rpn_table.append(m_end_switch)
+    current_rpn_table.append((':', 'colon'))
 
     parseToken('}', 'brackets_op')
     indent = predIndt()
@@ -308,8 +316,8 @@ def parseCaseBlock(ident_info, m_end_switch):
     postfixCodeGen('==', ('==', 'rel_op'))
 
     # Додаємо m_next_case JF (перейти до наступного 'case', якщо НЕ дорівнює)
-    rpn_table.append(m_next_case)
-    rpn_table.append(('JF', 'jf'))
+    current_rpn_table.append(m_next_case)
+    current_rpn_table.append(('JF', 'jf'))
 
     parseToken(':', 'punct')
 
@@ -319,13 +327,13 @@ def parseCaseBlock(ident_info, m_end_switch):
             break
         parseStatement()
 
-    rpn_table.append(m_end_switch)
-    rpn_table.append(('JMP', 'jump'))
+    current_rpn_table.append(m_end_switch)
+    current_rpn_table.append(('JMP', 'jump'))
 
 
     setValLabel(m_next_case)
-    rpn_table.append(m_next_case)
-    rpn_table.append((':', 'colon'))
+    current_rpn_table.append(m_next_case)
+    current_rpn_table.append((':', 'colon'))
 
     indent = predIndt()
 
@@ -369,21 +377,21 @@ def parseGuard():
     parseToken(')', 'brackets_op')
 
     # Якщо умова 'false', стрибаємо на 'm_else:' (де починається блок else)
-    rpn_table.append(m_else)
-    rpn_table.append(('JF', 'jf'))
+    current_rpn_table.append(m_else)
+    current_rpn_table.append(('JF', 'jf'))
 
     # Якщо умова була 'true', ми доходимо сюди.
     # Безумовно стрибаємо в кінець (пропускаємо блок 'else')
-    rpn_table.append(m_end)
-    rpn_table.append(('JMP', 'jump'))
+    current_rpn_table.append(m_end)
+    current_rpn_table.append(('JMP', 'jump'))
 
     # else
     parseToken('else', 'keyword')
 
     # Це початок блоку else, куди ми стрибали, якщо умова 'false'
     setValLabel(m_else)
-    rpn_table.append(m_else)
-    rpn_table.append((':', 'colon'))
+    current_rpn_table.append(m_else)
+    current_rpn_table.append((':', 'colon'))
 
     # { StatementList }
     parseToken('{', 'brackets_op')
@@ -394,8 +402,8 @@ def parseGuard():
 
     # Це кінець всього 'guard', куди ми стрибали, якщо умова 'true'
     setValLabel(m_end)
-    rpn_table.append(m_end)
-    rpn_table.append((':', 'colon'))
+    current_rpn_table.append(m_end)
+    current_rpn_table.append((':', 'colon'))
 
     indent = predIndt()
 
@@ -436,18 +444,18 @@ def parseFor():
 
     #Встановлюємо мітку умови
     setValLabel(m_cond)
-    rpn_table.append(m_cond)
-    rpn_table.append((':', 'colon'))
+    current_rpn_table.append(m_cond)
+    current_rpn_table.append((':', 'colon'))
 
     parseBooleanCondition()
 
     # Переходи після умови
     # Якщо умова 'false' стрибаємо на кінець
-    rpn_table.append(m_end)
-    rpn_table.append(('JF', 'jf'))
+    current_rpn_table.append(m_end)
+    current_rpn_table.append(('JF', 'jf'))
     # Якщо умова 'true' стрибаємо на тіло
-    rpn_table.append(m_body)
-    rpn_table.append(('JMP', 'jump'))
+    current_rpn_table.append(m_body)
+    current_rpn_table.append(('JMP', 'jump'))
 
     # ;
     parseToken(';', 'punct')
@@ -455,8 +463,8 @@ def parseFor():
     # Встановлюємо мітку інкременту
     # Ми стрибнемо сюди ПІСЛЯ тіла циклу
     setValLabel(m_incr)
-    rpn_table.append(m_incr)
-    rpn_table.append((':', 'colon'))
+    current_rpn_table.append(m_incr)
+    current_rpn_table.append((':', 'colon'))
 
     numLine, lex, tok = getSymb()
     if tok == 'id':
@@ -468,16 +476,16 @@ def parseFor():
         failParse('for increment expected', (numLine, lex, tok, 'identifier'))
 
     # Стрибаємо назад на умову
-    rpn_table.append(m_cond)
-    rpn_table.append(('JMP', 'jump'))
+    current_rpn_table.append(m_cond)
+    current_rpn_table.append(('JMP', 'jump'))
 
     # )
     parseToken(')', 'brackets_op')
 
     # Встановлюємо мітку тіла
     setValLabel(m_body)
-    rpn_table.append(m_body)
-    rpn_table.append((':', 'colon'))
+    current_rpn_table.append(m_body)
+    current_rpn_table.append((':', 'colon'))
 
     parseToken('{', 'brackets_op')
     while numRow <= len_tableOfSymb and getSymb()[1] != '}':
@@ -486,13 +494,13 @@ def parseFor():
 
     # Стрибаємо на інкремент
     # Це відбувається ПІСЛЯ виконання тіла
-    rpn_table.append(m_incr)
-    rpn_table.append(('JMP', 'jump'))
+    current_rpn_table.append(m_incr)
+    current_rpn_table.append(('JMP', 'jump'))
 
     # становлюємо кінцеву мітку
     setValLabel(m_end)
-    rpn_table.append(m_end)
-    rpn_table.append((':', 'colon'))
+    current_rpn_table.append(m_end)
+    current_rpn_table.append((':', 'colon'))
 
     indent = predIndt()
 
@@ -512,8 +520,8 @@ def parseIf():
     parseToken('(', 'brackets_op')
     parseBooleanCondition()
 
-    rpn_table.append(m_next_cond)
-    rpn_table.append(('JF', 'jf'))
+    current_rpn_table.append(m_next_cond)
+    current_rpn_table.append(('JF', 'jf'))
 
     parseToken(')', 'brackets_op')
     parseToken('{', 'brackets_op')
@@ -522,12 +530,12 @@ def parseIf():
         parseStatement()
     parseToken('}', 'brackets_op')
 
-    rpn_table.append(m_end_chain)
-    rpn_table.append(('JMP', 'jump'))
+    current_rpn_table.append(m_end_chain)
+    current_rpn_table.append(('JMP', 'jump'))
 
     setValLabel(m_next_cond)
-    rpn_table.append(m_next_cond)
-    rpn_table.append((':', 'colon'))
+    current_rpn_table.append(m_next_cond)
+    current_rpn_table.append((':', 'colon'))
 
     if numRow <= len_tableOfSymb and getSymb()[1] == 'else':
         print(indent + '  founded else')
@@ -544,8 +552,8 @@ def parseIf():
             parseToken('}', 'brackets_op')
 
     setValLabel(m_end_chain)
-    rpn_table.append(m_end_chain)
-    rpn_table.append((':', 'colon'))
+    current_rpn_table.append(m_end_chain)
+    current_rpn_table.append((':', 'colon'))
 
     indent = predIndt()
 
@@ -564,8 +572,8 @@ def parseElseIfBlock(m_end_chain):
 
     parseBooleanCondition()
 
-    rpn_table.append(m_next_cond)
-    rpn_table.append(('JF', 'jf'))
+    current_rpn_table.append(m_next_cond)
+    current_rpn_table.append(('JF', 'jf'))
 
     parseToken(')', 'brackets_op')
     parseToken('{', 'brackets_op')
@@ -574,12 +582,12 @@ def parseElseIfBlock(m_end_chain):
         parseStatement()
     parseToken('}', 'brackets_op')
 
-    rpn_table.append(m_end_chain)
-    rpn_table.append(('JMP', 'jump'))
+    current_rpn_table.append(m_end_chain)
+    current_rpn_table.append(('JMP', 'jump'))
 
     setValLabel(m_next_cond)
-    rpn_table.append(m_next_cond)
-    rpn_table.append((':', 'colon'))
+    current_rpn_table.append(m_next_cond)
+    current_rpn_table.append((':', 'colon'))
 
     # Рекурсивна обробка наступного 'else if' / 'else'
     if numRow <= len_tableOfSymb and getSymb()[1] == 'else':
@@ -1018,83 +1026,65 @@ def parseFactor():
 
 def parseFunctionCall():
     global numRow
+    global current_rpn_table
+
     indent = nextIndt()
     print(indent + 'parseFunctionCall():')
 
     # 1. Знаходимо функцію в ST
-    numLine, lex, tok = getSymb()
-    if tok != 'id':
+    numLine, func_name, func_tok = getSymb()  # Зберігаємо func_name
+    if func_tok != 'id':
         failParse('expected function name', getSymb())
 
-    cxt_found, name, attr = st.findName(lex, st.currentContext, numLine)
+    cxt_found, name, attr = st.findName(func_name, st.currentContext, numLine)
     func_kind = attr[1]
     func_return_type = attr[2]
-    func_params_count = attr[4]  # Це 'nParam', тобто кількість
-
+    func_params_count = attr[4]
     if func_kind != 'func':
-        st.failSem(f"'{lex}‘ is not a function, it is ’{func_kind}'", numLine)
+        st.failSem(f"'{func_name}‘ is not a function, it is ’{func_kind}'", numLine)
 
     numRow += 1
     parseToken('(', 'brackets_op')
 
-
-    # 2. Отримуємо очікувані типи з області видимості функції
     expected_types = []
     if func_params_count > 0:
         try:
             func_scope = st.tabName[name]
-
-            # Створюємо список [None, None, ...] розміром nParam
             param_list = [None] * func_params_count
-
             for param_name, param_attr in func_scope.items():
                 if param_name == 'declIn': continue
-
-                param_idx = param_attr[0]  # Індекс параметра (0, 1, ...)
+                param_idx = param_attr[0]
                 param_kind = param_attr[1]
-
-                # Перевіряємо, що це параметр (визначений в `parseFunctionDeclaration`)
                 if param_kind == 'var' and 0 <= param_idx < func_params_count:
-                    param_list[param_idx] = param_attr[2]  # Зберігаємо тип, напр. 'int'
-
-            # Перевіряємо, чи всі параметри знайдені (на випадок помилки)
+                    param_list[param_idx] = param_attr[2]
             if None in param_list:
                 st.failSem(f"Error reading parameters for function '{name}'", numLine)
-
             expected_types = param_list
-
         except KeyError:
-
             st.failSem(f"No scope found for function '{name}'", numLine)
 
-    # 3. Отримуємо типи аргументів з виклику
     actual_types = []
-    # Якщо є аргументи (наступний токен не ')')
     if numRow <= len_tableOfSymb and getSymb()[1] != ')':
-        actual_types = parseArgumentList()  # Отримуємо список типів
-
-    # 4. Перевіряємо кількість
+        actual_types = parseArgumentList()
     if len(actual_types) != len(expected_types):
-        st.failSem(f"The function ‘{name}’ expects {len(expected_types)} arguments, but received",
+        st.failSem(f"The function ‘{name}’ expects {len(expected_types)} arguments, but received {len(actual_types)}",
                    numLine)
 
-    # 5. Перевіряємо типи
     for i, (actual_t, expected_t) in enumerate(zip(actual_types, expected_types)):
-        # Використовуємо check_assign, щоб перевірити, чи можна
-        # 'actual_t' (тип виразу) присвоїти 'expected_t' (тип параметра)
-        # Це дозволяє неявне приведення
         st.check_assign(expected_t, actual_t, numLine)
 
-
     parseToken(')', 'brackets_op')
-    indent = predIndt()
+    postfixCodeGen(func_name, (func_name, 'CALL'))
+    if toView: configToPrint(func_name, numRow)
 
-    # 6. Повертаємо тип, який повертає функція
+    indent = predIndt()
     return func_return_type
 
 
 def parseReturnStatement():
     global numRow
+    global current_rpn_table
+
     indent = nextIndt()
     print(indent + 'parseReturnStatement():')
 
@@ -1107,25 +1097,25 @@ def parseReturnStatement():
     st.functionContextStack[-1]['has_return'] = True
     expected_type = st.functionContextStack[-1]['return_type']
 
-    # Перевіряємо, чи є вираз після return
     next_lex = getSymb()[1]
     has_expression = next_lex != '}'
 
     if has_expression:
         expr_type = parseExpression()
-        # Правило 8:
+
         if expected_type == 'void':
             st.failSem(f"A function with type ‘void’ must not return a value.", ret_line)
 
-        # Перевірка типу, що повертається
         st.check_return_type(expected_type, expr_type, ret_line)
 
     else:
-        # Правило 9:
         if expected_type != 'void':
             st.failSem(
                 f"The function must return a value of type '{expected_type}', but ‘return’ is used without an expression",
                 ret_line)
+
+    postfixCodeGen('RET', ('RET', 'RET'))
+    if toView: configToPrint('RET', ret_line)
 
     indent = predIndt()
 
@@ -1153,84 +1143,98 @@ def parseArgumentList():
 
 def parseFunctionDeclaration():
     global numRow
+    global current_rpn_table, current_labelTable, base_file_name
+
     indent = nextIndt()
     print(indent + 'parseFunctionDeclaration():')
 
+    m_skip_end = createLabel()
+
+    parent_rpn_table = current_rpn_table
+    parent_labelTable = current_labelTable
+
+    func_rpn_table = []
+    func_labelTable = {}
+
+    current_rpn_table = func_rpn_table
+    current_labelTable = func_labelTable
+
     parseToken('func', 'keyword')
 
-    # 1. Ім'я функції
     func_line, func_name, func_tok = getSymb()
     if func_tok != 'id':
         failParse('expected function name', getSymb())
     numRow += 1
 
-    # 2. Створюємо нову область видимості
+    parent_rpn_table.append(m_skip_end)
+    parent_rpn_table.append(('JMP', 'jump'))
+
     parentContext = st.currentContext
     st.currentContext = func_name
     st.tabName[st.currentContext] = {'declIn': parentContext}
-
     print(f"DEBUG: Entering scope {st.currentContext}, parent {parentContext}")
 
-    parseToken('(', 'brackets_op')
-
-    # 3. Список параметрів
     num_params = 0
+    parseToken('(', 'brackets_op')
     while numRow <= len_tableOfSymb and getSymb()[1] != ')':
         param_type = parseType()
-
         p_line, p_lex, p_tok = getSymb()
         if p_tok == 'id':
-            # Додаємо параметр в ST *нової* області видимості
-            attr = (num_params, 'var', param_type, 'assigned', '-')  # Параметри завжди ініціалізовані
+            attr = (num_params, 'var', param_type, 'assigned', '-')
             st.insertName(st.currentContext, p_lex, p_line, attr)
             num_params += 1
             numRow += 1
         else:
             failParse('expected parameter identifier', getSymb())
-
         if getSymb()[1] == ',':
             parseToken(',', 'punct')
-
     parseToken(')', 'brackets_op')
 
-    # 4. Тип, що повертається
-    return_type = 'void'  # За замовчуванням
+    return_type = 'void'
     if getSymb()[1] == '=>':
         parseToken('=>', 'keyword')
         return_type = parseType()
 
-    # 5. Додаємо функцію в ST *батьківської* області
     func_attr = (len(st.tabName[parentContext]) - 1, 'func', return_type, 'assigned', num_params)
     st.insertName(parentContext, func_name, func_line, func_attr)
+    st.functionContextStack.append({'name': func_name, 'return_type': return_type, 'has_return': False})
 
-    # 6. Додаємо в стек для перевірки 'return'
-    st.functionContextStack.append({'name': func_name, 'return_type': return_type,'has_return': False })
-
-    # 7. Розбираємо тіло функції
     parseToken('{', 'brackets_op')
-
-    # Цикл, поки не дійдемо до '}'
     while numRow <= len_tableOfSymb and getSymb()[1] != '}':
-
-        # Перевіряємо, що перед нами - оголошення чи інструкція
         numLine, lex, tok = getSymb()
-
         if lex == 'var' or lex == 'let':
-            # Якщо це 'var' або 'let', викликаємо parseDeclaration()
             parseDeclaration()
         else:
-            # В іншому випадку - це звичайна інструкція
             parseStatement()
-
     parseToken('}', 'brackets_op')
+
     func_context = st.functionContextStack[-1]
+
+    # Перевірка на відсутність return (якщо не void)
     if return_type != 'void' and not func_context['has_return']:
         st.failSem(f"The function ‘{func_name}’ has type ‘{return_type}’, but does not contain ‘return’", func_line)
 
-    # 8. Виходимо з області видимості
+    # Якщо функція void і не має явного return, додаємо RET
+    if return_type == 'void' and not func_context['has_return']:
+        postfixCodeGen('RET', ('RET', 'RET'))  # Пише у func_rpn_table
+        if toView: configToPrint('RET (implicit)', numRow)
+
+
+    func_file_path = f"{base_file_name}${func_name}"
+
+    # Передаємо ЛОКАЛЬНІ таблиці та ЛОКАЛЬНИЙ скоуп
+    generate_postfix_file(func_file_path, st.tabName[func_name], func_rpn_table, func_labelTable)
+
     st.currentContext = parentContext
     st.functionContextStack.pop()
     print(f"DEBUG: Exiting scope, back to {st.currentContext}")
+
+    current_rpn_table = parent_rpn_table
+    current_labelTable = parent_labelTable
+
+    setValLabel(m_skip_end)
+    current_rpn_table.append(m_skip_end)
+    current_rpn_table.append((':', 'colon'))
 
     indent = predIndt()
 
@@ -1251,26 +1255,26 @@ def parseSign():
 def postfixCodeGen(case,toTran):
     if case == 'lval':
         lex,tok = toTran
-        rpn_table.append((lex,'l-val'))
+        current_rpn_table.append((lex,'l-val'))
     elif case == 'rval':
         lex,tok = toTran
-        rpn_table.append((lex,'r-val'))
+        current_rpn_table.append((lex,'r-val'))
     elif case == 'const':
         lex,tok = toTran
         if tok == 'intnum':
-            rpn_table.append((lex,'int'))
+            current_rpn_table.append((lex,'int'))
         elif tok == 'floatnum':
-            rpn_table.append((lex,'float'))
+            current_rpn_table.append((lex,'float'))
         elif tok == 'boolval':
-            rpn_table.append((lex, 'bool'))
+            current_rpn_table.append((lex, 'bool'))
         elif tok == 'str':
-            rpn_table.append((lex, 'string'))
+            current_rpn_table.append((lex, 'string'))
     elif case == 'pow_op':
         lex,tok = toTran
-        rpn_table.append(('^', tok))
+        current_rpn_table.append(('^', tok))
     else:
         lex,tok = toTran
-        rpn_table.append((lex,tok))
+        current_rpn_table.append((lex,tok))
 
 
 def parseAssign(id_info):
@@ -1319,7 +1323,7 @@ def parseAssign(id_info):
             # Просте присвоєння (a = b)
             # (Правила 16, 17)
             st.check_assign(id_type, expr_type, assign_line)
-            rpn_table.append(('=', 'assign_op'))
+            current_rpn_table.append(('=', 'assign_op'))
             if toView: configToPrint(lex, numRow)
         elif assign_tok in ('add_ass_op', 'mult_ass_op'):
             # Складне присвоєння (a += b)
@@ -1454,70 +1458,79 @@ def predIndt():
     return ' ' * indt
 
 def setValLabel(lbl):
-    global labelTable
+    global current_labelTable, current_rpn_table
     lex,_tok = lbl
-    labelTable[lex] = len(rpn_table)
+    current_labelTable[lex] = len(current_rpn_table)
     return True
 
 def createLabel():
-    global labelTable
-    nmb = len(labelTable)+1
+    global current_labelTable
+    nmb = len(current_labelTable)+1
     lexeme = "m"+str(nmb)
-    val = labelTable.get(lexeme)
+    val = current_labelTable.get(lexeme)
     if val is None:
-        labelTable[lexeme] = 'val_undef'
+        current_labelTable[lexeme] = 'val_undef'
         tok = 'label'
     else:
         tok = 'Labels conflict'
         print(tok)
         exit(1003)
-
     return (lexeme,tok)
 
-def generate_postfix_file(filename, vars_table, rpn_table, labelTable=None):
+def generate_postfix_file(filename, vars_scope, rpn_table_to_save, labelTable_to_save):
     output_path = f"{filename}.postfix"
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(".target: Postfix Machine\n")
         f.write(".version: 0.3\n\n")
 
         f.write(".vars(\n")
-        for scope, vars_dict in vars_table.items():
-            for var_name, attributes in vars_dict.items():
+        # Ітеруємо лише по конкретному скоупу
+        if vars_scope: # Перевіряємо, чи скоуп не порожній
+            for var_name, attributes in vars_scope.items():
                 if var_name == "declIn":
                     continue
-                # attributes[2] це тип int, float, bool, string
                 f.write(f"\t{var_name}\t{attributes[2]}\n")
         f.write(")\n\n")
 
-        #для міток. окремо треба штуку зробити для кожної малої функції(як у прикладах psm)
         f.write(".labels(\n")
-        if labelTable:
-            for lbl, addr in labelTable.items():
+        if labelTable_to_save:
+            for lbl, addr in labelTable_to_save.items():
                 f.write(f"\t{lbl}\t{addr}\n")
         f.write(")\n\n")
 
         f.write(".code(\n")
-        for lexeme, token_type in rpn_table:
-            f.write(f"\t{lexeme:<10}\t{token_type}\n")
+        if rpn_table_to_save:
+            for lexeme, token_type in rpn_table_to_save:
+                f.write(f"\t{lexeme:<10}\t{token_type}\n")
         f.write(")\n")
 
-    print(f"Postfix file was generated: {filename}")
+    print(f"Postfix file was generated: {output_path}")
 
 
 def compileToPostfix(fileName):
-    global len_tableOfSymb , FSuccess
+    global len_tableOfSymb, FSuccess
+    global base_file_name, current_rpn_table, current_labelTable, main_rpn_table, main_labelTable
+    base_file_name = fileName.replace('.ll', '')
+
+    current_rpn_table = main_rpn_table
+    current_labelTable = main_labelTable
+
+
     print('compileToPostfix: lexer Start Up\n')
     FSuccess = lex()
     print('compileToPostfix: lexer-FSuccess ={0}'.format(FSuccess))
-    # чи був успiшним лексичний розбiр
-    if ('Lexer',True) == FSuccess:
+
+    if ('Lexer', True) == FSuccess:
         len_tableOfSymb = len(tableOfSymb)
-        print('-'*55)
+        print('-' * 55)
         print('compileToPostfix: Start Up compiler = parser + codeGenerator\n')
         FSuccess = False
         FSuccess = parseProgram()
+
         if FSuccess == (True):
-            generate_postfix_file(fileName,st.tabName, rpn_table, labelTable)
+
+            generate_postfix_file(base_file_name, st.tabName['univ'], main_rpn_table, main_labelTable)
+
         if not FSuccess:
             print(f"Postfix-код не було збережено у файл {fileName}")
     return FSuccess
@@ -1526,12 +1539,12 @@ def configToPrint(lex,numRow):
     stage = '\nTranslation step\n'
     stage += 'lex: \'{0}\'\n'
     stage += 'rpn_table = {3}\n'
-    print(stage.format(lex,numRow,str(tableOfSymb[numRow]),str(rpn_table)))
+    print(stage.format(lex,numRow,str(tableOfSymb[numRow]),str(main_rpn_table)))
 
 
 # запуск парсера
 
-compileToPostfix('testIF.ll')
+compileToPostfix('testIF')
 # if FSuccess == ('Lexer', True):
 #     parseProgram()
 #     print("\nParser: Parsing completed successfully")
