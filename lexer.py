@@ -1,4 +1,3 @@
-
 # Таблиця лексем мови
 tokenTable = {
     # булеві константи
@@ -15,7 +14,7 @@ tokenTable = {
 
     # функції
     'func': 'keyword', 'return': 'keyword', '=>': 'keyword',
-    #func pow(int a, int b) => int{}
+    # func pow(int a, int b) => int{}
 
     # оператори присвоєння зі скороченням
     '+=': 'add_ass_op', '-=': 'add_ass_op',
@@ -46,7 +45,6 @@ tokenTable = {
     # лапки
     '"': 'quote',
 
-
     # коментарі
     '//': 'comment', '/*': 'comment', '*/': 'comment',
 
@@ -57,7 +55,8 @@ tokenTable = {
 }
 
 # Решту токенів визначаємо не за лексемою, а за заключним станом
-tokStateTable = {6:'id', 2: 'intnum', 4: 'floatnum', 15:'assign', 18: 'rel_op',  20:'str', 25:'spec_sign', 29:'comment', 31:'comment', 32:'comment', 34: 'newline'}
+tokStateTable = {6: 'id', 2: 'intnum', 4: 'floatnum', 15: 'assign', 18: 'rel_op', 20: 'str', 25: 'spec_sign',
+                 29: 'comment', 31: 'comment', 32: 'comment', 34: 'newline'}
 
 # Діаграма станів
 #               Q                                   q0          F
@@ -68,82 +67,87 @@ tokStateTable = {6:'id', 2: 'intnum', 4: 'floatnum', 15:'assign', 18: 'rel_op', 
 #                                                                   31, 29, 25,34})
 
 # δ - state-transition_function
-stf={(0,'WhiteSpace'):0,  (0,'Digit'):1, (1,'Digit'):1, (1,'other'):2,
-     (1,'dot'):3, (3,'Digit'):3, (3,'other'):4,
-     (0, 'Letter'):5, (5,'Letter'):5,(5,'Digit'):5, (5,'other'):6,
-     (0, 'other'):7,
-     (0, 'OrP'):11, (11,'OrP'):12,
-     (11, 'other'):9,
-     (0, 'AndP'):8, (8,'AndP'):10,
-     (8,'other'):9,
-     (0, 'Quote'):19, (19,'other'):19, (19,'Quote'):20,
-     (19,'NewLine'):21,
-     (0, 'Equal'):13, (13,'other'):15,
-     (13,'More'):16,
-     (13,'Equal'):14,
-     (0,'Less'):17,(0,'More'):17, (0,'Am'):17, (0,'Exclam'):17, (17,'Equal'):14,
-     (17,'other'):18,
-     (0,'Star'):22, (22,'other'):18,
-     (22,'Star'):23,
-     (22,'Equal'):33,
-     (0,'FSlash'):26, (26,'Star'):27, (27,'other'):27, (27, 'NewLine'):27, (27,'Star'):28,
-     (28,'FSlash'):29,
-     (26,'FSlash'):30, (30,'other'):30, (30,'NewLine'):31,
-     (26, 'Equal'):33,
-     (26, 'other'):32,
-     (0, 'SpecialSigns'):24, (24,'other'):25,
-     (0, 'NewLine'):34
+stf = {(0, 'WhiteSpace'): 0, (0, 'Digit'): 1, (1, 'Digit'): 1, (1, 'other'): 2,
+       (1, 'dot'): 3, (3, 'Digit'): 3, (3, 'other'): 4,
+       (0, 'Letter'): 5, (5, 'Letter'): 5, (5, 'Digit'): 5, (5, 'other'): 6,
+       (0, 'other'): 7,
+       (0, 'OrP'): 11, (11, 'OrP'): 12,
+       (11, 'other'): 9,
+       (0, 'AndP'): 8, (8, 'AndP'): 10,
+       (8, 'other'): 9,
+       (0, 'Quote'): 19, (19, 'other'): 19, (19, 'Quote'): 20,
+       (19, 'NewLine'): 21,
+       (0, 'Equal'): 13, (13, 'other'): 15,
+       (13, 'More'): 16,
+       (13, 'Equal'): 14,
+       (0, 'Less'): 17, (0, 'More'): 17, (0, 'Am'): 17, (0, 'Exclam'): 17, (17, 'Equal'): 14,
+       (17, 'other'): 18,
+       (0, 'Star'): 22, (22, 'other'): 18,
+       (22, 'Star'): 23,
+       (22, 'Equal'): 33,
+       (0, 'FSlash'): 26, (26, 'Star'): 27, (27, 'other'): 27, (27, 'NewLine'): 27, (27, 'Star'): 28,
+       (28, 'FSlash'): 29,
+       (26, 'FSlash'): 30, (30, 'other'): 30, (30, 'NewLine'): 31,
+       (26, 'Equal'): 33,
+       (26, 'other'): 32,
+       (0, 'SpecialSigns'): 24, (24, 'other'): 25,
+       (0, 'NewLine'): 34
 
-}
+       }
 
-initState = 0   # q0 - стартовий стан
-F={2, 4, 6, 7, 12, 9, 10, 21, 20, 15, 16, 14, 18, 23, 33, 32, 31, 29, 25, 34}
-Fstar={2, 4, 6, 15, 18, 32, 25}   # зірочка
-Ferror={7, 9, 21}# обробка помилок
+initState = 0  # q0 - стартовий стан
+F = {2, 4, 6, 7, 12, 9, 10, 21, 20, 15, 16, 14, 18, 23, 33, 32, 31, 29, 25, 34}
+Fstar = {2, 4, 6, 15, 18, 32, 25}  # зірочка
+Ferror = {7, 9, 21}  # обробка помилок
 
-tableOfId={}   # Таблиця ідентифікаторів
-tableOfConst={} # Таблиця констант
-tableOfSymb={}  # Таблиця символів програми (таблиця розбору)
+tableOfId = {}  # Таблиця ідентифікаторів
+tableOfConst = {}  # Таблиця констант
+tableOfSymb = {}  # Таблиця символів програми (таблиця розбору)
 
-state=initState # поточний стан
+state = initState  # поточний стан
 
-f = open('test.my_lang', 'r', encoding="utf-8")
-sourceCode=f.read()
+f = open('testIF.ll', 'r', encoding="utf-8")
+sourceCode = f.read()
+sourceCode += " \n"
 f.close()
+
+lenCode = len(sourceCode) - 1
 
 # FSuccess - ознака успішності/неуспішності розбору
 FSuccess = ('Lexer', False)
 
-lenCode=len(sourceCode)-1       # номер останнього символа у файлі з кодом програми
-numLine=1                       # лексичний аналіз починаємо з першого рядка
-numChar=-1                      # з першого символа (в Python'і нумерація - з 0)
-char=''                         # ще не брали жодного символа
-lexeme=''                       # ще не починали розпізнавати лексеми
+lenCode = len(sourceCode) - 1  # номер останнього символа у файлі з кодом програми
+numLine = 1  # лексичний аналіз починаємо з першого рядка
+numChar = -1  # з першого символа (в Python'і нумерація - з 0)
+char = ''  # ще не брали жодного символа
+lexeme = ''  # ще не починали розпізнавати лексеми
 
 
 def lex():
-  global state,numLine,char,lexeme,numChar
-  try:
-    while numChar<lenCode:
-      char=nextChar()				  # прочитати наступний символ
-      classCh=classOfChar(char)		  # до якого класу належить
-      state=nextState(state,classCh)  # обчислити наступний стан
-      if (is_final(state)): 		  # якщо стан заключний
-        processing()				  # виконати семантичні процедури
-      elif state==initState:
-        lexeme=''       # якщо стан НЕ заключний, а стартовий - нова лексема
-      else:
-        if char=="\n":
-            numLine+=1
-        lexeme+=char	# якщо стан НЕ закл. і не стартовий - додати символ до лексеми
-    fSuccess = ('Lexer', True)
-    print('Lexer: Lexical analysis completed successfully')
+    global state, numLine, char, lexeme, numChar
+    try:
+        while numChar < lenCode:
+            char = nextChar()  # прочитати наступний символ
+            classCh = classOfChar(char)  # до якого класу належить
+            state = nextState(state, classCh)  # обчислити наступний стан
+            if (is_final(state)):  # якщо стан заключний
+                processing()  # виконати семантичні процедури
+            elif state == initState:
+                lexeme = ''  # якщо стан НЕ заключний, а стартовий - нова лексема
+            else:
+                if char == "\n":
+                    numLine += 1
+                lexeme += char  # якщо стан НЕ закл. і не стартовий - додати символ до лексеми
+        tableOfSymb[len(tableOfSymb) + 1] = (numLine, '', "EOF", '')
+        fSuccess = ('Lexer', True)
+        print('Lexer: Lexical analysis completed successfully')
 
-  except SystemExit as e:
-    # Повідомити про факт виявлення помилки
-    print('Lexer: Program terminated with code {0}'.format(e))
-    fSuccess = ('Lexer', False)
-  return fSuccess
+    except SystemExit as e:
+        # Повідомити про факт виявлення помилки
+        print('Lexer: Program terminated with code {0}'.format(e))
+        fSuccess = ('Lexer', False)
+    return fSuccess
+
 
 def processing():
     global state, lexeme, char, numLine, numChar, tableOfSymb
@@ -154,21 +158,20 @@ def processing():
         if token != 'keyword':  # звичайний id/число
             index = indexIdConst(state, lexeme)
             print(f"{numLine:<3d} {lexeme:<10s} {token:<10s} {index:<5d}")
-            tableOfSymb[len(tableOfSymb)+1] = (numLine, lexeme, token, index)
+            tableOfSymb[len(tableOfSymb) + 1] = (numLine, lexeme, token, index)
         else:  # ключове слово
             print(f"{numLine:<3d} {lexeme:<10s} {token:<10s}")
-            tableOfSymb[len(tableOfSymb)+1] = (numLine, lexeme, token, '')
+            tableOfSymb[len(tableOfSymb) + 1] = (numLine, lexeme, token, '')
         lexeme = ''
         numChar = putCharBack(numChar)  # зірочка
         state = initState
         return
 
-
     # --- оператор "=" ---
     if state == 15:
         token = getToken(state, lexeme)
         print(f"{numLine:<3d} {lexeme:<10s} {token:<10s}")
-        tableOfSymb[len(tableOfSymb)+1] = (numLine, lexeme, token, '')
+        tableOfSymb[len(tableOfSymb) + 1] = (numLine, lexeme, token, '')
         lexeme = ''
         state = initState
         return
@@ -178,7 +181,7 @@ def processing():
         lexeme += char
         token = getToken(state, lexeme)
         print(f"{numLine:<3d} {lexeme:<10s} {token:<10s}")
-        tableOfSymb[len(tableOfSymb)+1] = (numLine, lexeme, token, '')
+        tableOfSymb[len(tableOfSymb) + 1] = (numLine, lexeme, token, '')
         lexeme = ''
         state = initState
         return
@@ -193,21 +196,14 @@ def processing():
         state = initState
         return
 
-
-
     # --- рядкові константи ---
     if state == 20:
         token = getToken(state, lexeme)
-        marker = ''
-        # if token == 'str':
-        #     for key, val in tokenTable.items():
-        #         if val == 'quote' and lexeme.strip().startswith(key):
-        #             marker = key
-        #             break
         lexeme = lexeme[1:]
         index = indexIdConst(state, lexeme)
         print(f"{numLine:<3d} {lexeme:<10s} {token:<10s} {index:<5d}")
         tableOfSymb[len(tableOfSymb) + 1] = (numLine, lexeme, token, index)
+
         lexeme = ''
         state = initState
         return
@@ -228,7 +224,6 @@ def processing():
         state = initState
         numLine += 1
         return
-
 
     # --- кінець блочного коментаря ---
     if state == 29:  # фінальний стан для блочного коментаря
@@ -264,47 +259,50 @@ def processing():
         state = initState
         return
 
-
-
     # --- помилки ---
     if state in Ferror:
         fail()
 
 
-
 def fail():
-  global state,numLine,char
-  print(numLine)
-  if state == 7:
-    print(f'ERROR 7: in line {numLine}  unexpected character  was met -> "{char}"')
-    exit(7)
-  if state == 9:
-    print(f'ERROR 9: unexpected character  was met -> "{char}" in line {numLine}. SUGGESTED CORRECTION: might be symbols || or &&')
-    exit(9)
-  if state == 21:
-    print(f'ERROR 21: unexpected character  was met -> "{char}" in line {numLine}. Multiline strings are not allowed. ')
-    exit(21)
+    global state, numLine, char
+    print(numLine)
+    if state == 7:
+        print(f'ERROR 7: in line {numLine}  unexpected character  was met -> "{char}"')
+        exit(7)
+    if state == 9:
+        print(
+            f'ERROR 9: unexpected character  was met -> "{char}" in line {numLine}. SUGGESTED CORRECTION: might be symbols || or &&')
+        exit(9)
+    if state == 21:
+        print(
+            f'ERROR 21: unexpected character  was met -> "{char}" in line {numLine}. Multiline strings are not allowed. ')
+        exit(21)
 
 
 def is_final(state):
-  if (state in F):
-    return True
-  else:
-    return False
+    if (state in F):
+        return True
+    else:
+        return False
 
-def nextState(state,classCh):
-  try:
-    return stf[(state,classCh)]
-  except KeyError:
-  	return stf[(state,'other')]
+
+def nextState(state, classCh):
+    try:
+        return stf[(state, classCh)]
+    except KeyError:
+        return stf[(state, 'other')]
+
 
 def nextChar():
-  global numChar
-  numChar+=1
-  return sourceCode[numChar]
+    global numChar
+    numChar += 1
+    return sourceCode[numChar]
+
 
 def putCharBack(numChar):
-  return numChar-1
+    return numChar - 1
+
 
 def classOfChar(char):
     if char == '.':
@@ -345,30 +343,31 @@ def classOfChar(char):
     return res
 
 
-def getToken(state,lexeme):
-  try:
-    return tokenTable[lexeme]
-  except KeyError:
-    return tokStateTable[state]
+def getToken(state, lexeme):
+    try:
+        return tokenTable[lexeme]
+    except KeyError:
+        return tokStateTable[state]
 
 
-def indexIdConst(state,lexeme):
-  indx=0
-  if state==6:
-    indx=tableOfId.get(lexeme)
-    if indx is None:
-      indx=len(tableOfId)+1
-      tableOfId[lexeme]=indx
-  if state in (2,4):
-    obj=tableOfConst.get(lexeme)
-    if obj is not None:
-        indx=obj[1]
+def indexIdConst(state, lexeme):
+    indx = 0
+    if state == 6:
+        indx = tableOfId.get(lexeme)
+        if indx is None:
+            indx = len(tableOfId) + 1
+            tableOfId[lexeme] = indx
+    if state in (2, 4):
+        obj = tableOfConst.get(lexeme)
+        if obj is not None:
+            indx = obj[1]
 
-    else:
-        indx=len(tableOfConst)+1
-        tableOfConst[lexeme]=(tokStateTable[state],indx)
+        else:
+            indx = len(tableOfConst) + 1
+            tableOfConst[lexeme] = (tokStateTable[state], indx)
 
-  return indx
+    return indx
+
 
 # Таблиці: розбору, ідентифікаторів та констант
 # print('-'*100)
@@ -378,7 +377,6 @@ def indexIdConst(state,lexeme):
 
 # запуск лексичного аналізатора
 # lex()
-
 
 
 print('-' * 100)
@@ -402,7 +400,6 @@ def format_table_of_symb_tabular(symb_table):
 
 
 def format_id_const_tabular(data_table, name):
-
     if name == 'tableOfId':
         header = f"| {'Identifier':<15} | {'Index':<5}"
     else:  # tableOfConst
@@ -426,7 +423,6 @@ def format_id_const_tabular(data_table, name):
         output += f"{row}\n"
 
     return output
-
 
 #
 # print("\ntableOfSymb:")
