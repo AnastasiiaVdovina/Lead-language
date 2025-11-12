@@ -199,7 +199,7 @@ def processing():
     # --- рядкові константи ---
     if state == 20:
         token = getToken(state, lexeme)
-        lexeme = lexeme[1:]
+        lexeme = lexeme[:-1]+'"'
         index = indexIdConst(state, lexeme)
         print(f"{numLine:<3d} {lexeme:<10s} {token:<10s} {index:<5d}")
         tableOfSymb[len(tableOfSymb) + 1] = (numLine, lexeme, token, index)
