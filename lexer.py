@@ -106,7 +106,7 @@ tableOfSymb = {}  # Таблиця символів програми (табли
 
 state = initState  # поточний стан
 
-f = open('testIF.ll', 'r', encoding="utf-8")
+f = open('testfiles/testIF.ll', 'r', encoding="utf-8")
 sourceCode = f.read()
 sourceCode += " \n"
 f.close()

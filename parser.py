@@ -921,6 +921,12 @@ def parseArithmExpression(operator_stack=None, operand_stack=None):
             numRow += 1
             r_type = parseTerm(operator_stack, operand_stack)
             l_type = st.check_arithm_op(l_type, lex, r_type, numLine)
+            if isinstance(l_type, tuple):
+                # це (тип, конверсія)
+                result_type, conv = l_type
+                current_rpn_table.append((conv, 'conv'))
+                l_type = result_type
+
         else:
             break
 
@@ -950,6 +956,12 @@ def parseTerm(operator_stack=None, operand_stack=None):
             numRow += 1
             r_type = parsePower(operator_stack, operand_stack)
             l_type = st.check_arithm_op(l_type, lex, r_type, numLine)
+            if isinstance(l_type, tuple):
+                # це (тип, конверсія)
+                result_type, conv = l_type
+                current_rpn_table.append((conv, 'conv'))
+                l_type = result_type
+
         else:
             break
 
@@ -980,6 +992,12 @@ def parsePower(operator_stack=None, operand_stack=None):
             numRow += 1
             r_type = parseFactor()
             l_type = st.check_arithm_op(l_type, lex, r_type, numLine)
+            if isinstance(l_type, tuple):
+                # це (тип, конверсія)
+                result_type, conv = l_type
+                current_rpn_table.append((conv, 'conv'))
+                l_type = result_type
+
         else:
             break
 
