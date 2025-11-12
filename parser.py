@@ -227,7 +227,7 @@ def parsePrint():
         parseExpression()
 
     elif tok == 'str':
-        postfixCodeGen('str', (lex, tok))
+        postfixCodeGen('typemap', (lex, tok))
         if toView: configToPrint(lex, numRow)
 
         numRow += 1
