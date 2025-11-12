@@ -30,7 +30,7 @@ base_file_name = ""
 
 current_labelTable = None
 current_rpn_table = None
-
+funcs_to_save = {}
 toView = True
 
 toView = True
@@ -1203,7 +1203,7 @@ def parseArgumentList():
 
 def parseFunctionDeclaration():
     global numRow
-    global current_rpn_table, current_labelTable, base_file_name
+    global current_rpn_table, current_labelTable, base_file_name, funcs_to_save
 
     indent = nextIndt()
     print(indent + 'parseFunctionDeclaration():')
@@ -1267,6 +1267,10 @@ def parseFunctionDeclaration():
     st.insertName(parentContext, func_name, func_line, func_attr)
     st.functionContextStack.append({'name': func_name, 'return_type': return_type, 'has_return': False})
 
+    # Додаємо функцію в funcs_to_save
+    full_func_name = f"{base_file_name}${func_name}"
+    funcs_to_save[func_name] = (return_type, num_params)
+
     # 7. Розбираємо тіло функції
     parseToken('{', 'brackets_op')
 
@@ -1289,17 +1293,15 @@ def parseFunctionDeclaration():
 
     # Перевірка на відсутність return (якщо не void)
     if return_type != 'void' and not func_context['has_return']:
-        st.failSem(f"The function ‘{func_name}’ has type ‘{return_type}’, but does not contain ‘return’", func_line)
+        st.failSem(f"The function '{func_name}' has type '{return_type}', but does not contain 'return'", func_line)
 
     # Якщо функція void і не має явного return, додаємо RET
     if return_type == 'void' and not func_context['has_return']:
         postfixCodeGen('RET', ('RET', 'RET'))  # Пише у func_rpn_table
         if toView: configToPrint('RET (implicit)', numRow)
 
-
     func_file_path = f"{base_file_name}${func_name}"
 
-    # Передаємо ЛОКАЛЬНІ таблиці та ЛОКАЛЬНИЙ скоуп
     generate_postfix_file(func_file_path, st.tabName[func_name], func_rpn_table, func_labelTable)
 
     st.currentContext = parentContext
@@ -1559,7 +1561,7 @@ def createLabel():
 
     return (lexeme,tok)
 
-def generate_postfix_file(filename, vars_scope, rpn_table_to_save, labelTable_to_save):
+def generate_postfix_file(filename, vars_scope, rpn_table_to_save, labelTable_to_save, funcs_to_save=None):
     output_path = f"{filename}.postfix"
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(".target: Postfix Machine\n")
@@ -1571,9 +1573,17 @@ def generate_postfix_file(filename, vars_scope, rpn_table_to_save, labelTable_to
             for var_name, attributes in vars_scope.items():
                 if var_name == "declIn":
                     continue
+                if attributes[1] == 'func':
+                    continue
                 # attributes[2] це тип int, float, bool, string
                 f.write(f"\t{var_name}\t{attributes[2]}\n")
         f.write(")\n\n")
+        f.write(".funcs(\n")
+        if funcs_to_save:
+            for func_name, (ret_type, arg_count) in funcs_to_save.items():
+                # Всі три елементи в одному рядку, розділені табуляцією
+                f.write(f"\t{func_name}\t{ret_type}\t{arg_count}\n")
+            f.write(")\n\n")
 
         #для міток. окремо треба штуку зробити для кожної малої функції(як у прикладах psm)
         f.write(".labels(\n")
@@ -1613,7 +1623,7 @@ def compileToPostfix(fileName):
 
         if FSuccess == (True):
 
-            generate_postfix_file(base_file_name, st.tabName['univ'], main_rpn_table, main_labelTable)
+            generate_postfix_file(base_file_name, st.tabName['univ'], main_rpn_table, main_labelTable, funcs_to_save)
 
         if not FSuccess:
             print(f"Postfix-код не було збережено у файл {fileName}")
