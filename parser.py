@@ -294,7 +294,10 @@ def parseCaseBlock(ident_info, m_end_switch):
 
     parseToken('case', 'keyword')
 
-    postfixCodeGen('rval', (ident_info[1], 'r-val'))
+    id_line, id_lex, id_tok = ident_info
+    _cxt, _name, id_attr = st.findName(id_lex, st.currentContext, id_line)
+    switch_var_type = id_attr[2]
+    postfixCodeGen('rval', (id_lex, 'r-val'))
 
     is_negative = False
     numLine_const, lex_const, tok_const = getSymb()
@@ -304,18 +307,31 @@ def parseCaseBlock(ident_info, m_end_switch):
         parseToken('-', 'add_op')
         numLine_const, lex_const, tok_const = getSymb()
 
+    case_const_type = 'type_error'
     if tok_const == 'intnum':
         print(indent + f' case number: {"-" if is_negative else ""}{lex_const}')
-        postfixCodeGen('rval', (lex_const, tok_const))
+        # RPN: ... a, 7776
+        postfixCodeGen('typemap', (lex_const, tok_const))
         numRow += 1
+        case_const_type = 'int'
     else:
         failParse('An integer number was expected after case', (numLine_const, lex_const, tok_const))
 
     if is_negative:
         postfixCodeGen('NEG', ('NEG', 'math_op'))
 
-    postfixCodeGen('typemap', (lex_const, tok_const))
+    result_type, conv = st.check_rel_op(switch_var_type, '==', case_const_type, numLine_const)
 
+    if conv == 'i2f_r':
+
+        current_rpn_table.append(('i2f', 'conv'))
+    elif conv == 'i2f_l':
+
+        current_rpn_table.append(('SWAP', 'stack_op'))
+        current_rpn_table.append(('i2f', 'conv'))
+        current_rpn_table.append(('SWAP', 'stack_op'))
+
+    postfixCodeGen('typemap', ('==', 'rel_op'))
     # Додаємо m_next_case JF (перейти до наступного 'case', якщо НЕ дорівнює)
     current_rpn_table.append(m_next_case)
     current_rpn_table.append(('JF', 'jf'))
@@ -607,6 +623,7 @@ def parseElseIfBlock(m_end_chain):
     indent = predIndt()
 
 
+
 # Declaration = “var” IdentList “:” Type [ “=” Expression ];
 def parseDeclaration():
     indent = nextIndt()
@@ -626,19 +643,17 @@ def parseDeclaration():
     else:
         failParse('token mismatch', (numLine, lex, tok, 'var | let'))
 
-    # 1. Отримуємо список ідентифікаторів
     ident_list = parseIdentList()
 
     parseToken(':', 'punct')
-
-    # 2. Отримуємо їх тип (Правило 1)
     declared_type = parseType()
-
-    # 3. Перевіряємо на ініціалізацію
     val_status = 'undefined'  # Правило 4 (значення за замовчуванням)
 
     if numRow <= len_tableOfSymb and getSymb()[2] == 'assign_op':
         parseToken('=', 'assign_op')
+
+        for id_line, id_lex, id_tok in ident_list:
+            postfixCodeGen('lval', (id_lex, id_tok))
         # 4. Отримуємо тип виразу
         expr_type = parseExpression()
         postfixCodeGen('typemap', ('=', 'assign_op'))
@@ -647,7 +662,6 @@ def parseDeclaration():
 
         val_status = 'assigned'  # Ініціалізовано
     elif is_const:
-        # 'let' (константи) мають бути ініціалізовані
         st.failSem(f"The ‘let’ constant must be initialized when declared", numLine)
 
     # 6. Додаємо всі ідентифікатори в ST
@@ -690,8 +704,7 @@ def parseIdentList():
             numRow += 1
         else:
             break
-    for numLine, lex, tok in id_list:
-        postfixCodeGen('lval', (lex,tok))
+
     indent = predIndt()
     return id_list  # Повертаємо список
 
@@ -789,14 +802,10 @@ def parseExpression():
         indent = predIndt()
 
         return 'string'
-
-    # Інакше це арифметичний вираз...
     operator_stack = []
     operand_stack = []
 
     expr_type = parseArithmExpression(operator_stack, operand_stack)
-
-    # ...який може бути частиною порівняння
     if numRow <= len_tableOfSymb:
         numLine, lex, tok = getSymb()
         if tok == 'rel_op':
@@ -805,13 +814,21 @@ def parseExpression():
             print(indent + f'  in line {numLine} - comparison token {(lex, tok)}')
 
             r_type = parseArithmExpression(operator_stack, operand_stack)
+            result_type, conv = st.check_rel_op(expr_type, op_lex, r_type, op_line)
 
-            # Правила 12, 14: Перевірка типів для операторів порівняння
-            st.check_rel_op(expr_type, op_lex, r_type, op_line)
+            if conv == 'i2f_r':
+                current_rpn_table.append(('i2f', 'conv'))
+
+            elif conv == 'i2f_l':
+                current_rpn_table.append(('SWAP', 'stack_op'))
+                current_rpn_table.append(('i2f', 'conv'))
+                current_rpn_table.append(('SWAP', 'stack_op'))
+
             postfixCodeGen("typemap", (op_lex, tok))
-            expr_type = 'bool'
+            expr_type = result_type  # 'bool'
+
             indent = predIndt()
-            return 'bool'  # Правило 13: Результат порівняння - bool
+            return expr_type  # Повертає 'bool'
 
     while operator_stack:
         op = operator_stack.pop()
@@ -1373,6 +1390,10 @@ def parseAssign(id_info):
             st.failSem(f"input() can only be assigned to ‘int’, ‘float’, or ‘string’, but not to'{id_type}'",
                        assign_line)
         print(f"Semantic: Semantically accepting input() into var of type '{id_type}'")
+
+        current_rpn_table.append(('=', 'assign_op'))
+        if toView: configToPrint('=', numRow)
+
         # postfixCodeGen('', ('input', 'func'))
         # postfixCodeGen('', ('=', 'assign_op'))
     else:

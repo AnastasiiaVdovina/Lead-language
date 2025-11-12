@@ -122,19 +122,26 @@ def check_arithm_op(l_type, op, r_type, line):
 
 
 #Перевіряє типи для операцій порівняння (правила 12, 14)
+# У symbol_table.py
 def check_rel_op(l_type, op, r_type, line):
-
     # Правило 12: bool та string можна порівнювати тільки між собою
     if l_type in ('bool', 'string') or r_type in ('bool', 'string'):
         if l_type != r_type:
             failSem(f"The comparison operation ‘{op}’ cannot be applied to ‘{l_type}’ and '{r_type}'", line)
-        return  # 'bool' == 'bool' or 'string' == 'string' - це ОК
+        return ('bool', None)  # OK, no conversion
 
     # Правило 14: int та float можна порівнювати
     if l_type in ('int', 'float') and r_type in ('int', 'float'):
-        return  # ОК
+
+        if l_type == 'float' and r_type == 'int':
+            return ('bool', 'i2f_r')
+        if l_type == 'int' and r_type == 'float':
+            return ('bool', 'i2f_l')
+
+        return ('bool', None)  # OK (float/float or int/int)
 
     failSem(f"The comparison operation ‘{op}’ cannot be applied to ‘{l_type}’ and '{r_type}'", line)
+    return ('type_error', None)
 
 
 #перевіряє типи для присвоєння (правила 16, 17)
