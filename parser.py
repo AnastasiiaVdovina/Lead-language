@@ -163,6 +163,7 @@ def parseWhile():
 
 
 
+
 # CycleRep = ‘repeat’ ‘{’  Body ‘while’  BoolExpression ‘}’
 def parseRepeatWhile():
     global numRow
@@ -313,7 +314,7 @@ def parseCaseBlock(ident_info, m_end_switch):
     if is_negative:
         postfixCodeGen('NEG', ('NEG', 'math_op'))
 
-    postfixCodeGen('==', ('==', 'rel_op'))
+    postfixCodeGen('typemap', (lex_const, tok_const))
 
     # Додаємо m_next_case JF (перейти до наступного 'case', якщо НЕ дорівнює)
     current_rpn_table.append(m_next_case)
@@ -640,7 +641,7 @@ def parseDeclaration():
         parseToken('=', 'assign_op')
         # 4. Отримуємо тип виразу
         expr_type = parseExpression()
-        postfixCodeGen('', ('=', 'assign_op'))
+        postfixCodeGen('typemap', ('=', 'assign_op'))
         # 5. Перевіряємо типи (Правила 5, 16, 17)
         st.check_assign(declared_type, expr_type, numLine)
 
@@ -731,7 +732,7 @@ def precedence(operator):
         '**': 10,
 
         '!': 9,
-        #'@': 9,  # унарний мінус
+        'NEG': 9,  # унарний мінус
 
         '*': 8,
         '/': 8,
@@ -779,12 +780,12 @@ def parseExpression():
 
     if tok == 'boolval' or lex == '!':
         expr_type = parseBoolExpression()
-        postfixCodeGen("const", (lex,tok))
+        postfixCodeGen("typemap", (lex,tok))
         indent = predIndt()
         return expr_type
     elif tok == 'str':
         numRow += 1
-        postfixCodeGen("const", (lex, tok))
+        postfixCodeGen("typemap", (lex, tok))
         indent = predIndt()
 
         return 'string'
@@ -807,14 +808,14 @@ def parseExpression():
 
             # Правила 12, 14: Перевірка типів для операторів порівняння
             st.check_rel_op(expr_type, op_lex, r_type, op_line)
-            postfixCodeGen("", (op_lex, "rel_op"))
+            postfixCodeGen("typemap", (op_lex, tok))
             expr_type = 'bool'
             indent = predIndt()
             return 'bool'  # Правило 13: Результат порівняння - bool
 
     while operator_stack:
         op = operator_stack.pop()
-        postfixCodeGen('', op)
+        postfixCodeGen('typemap', op)
 
     indent = predIndt()
     return expr_type
@@ -897,9 +898,13 @@ def parseArithmExpression(operator_stack=None, operand_stack=None):
     # Перевірка на унарний знак
     numLine, lex, tok = getSymb()
     if (lex, tok) in (('+', 'add_op'), ('-', 'add_op')):
+        while operator_stack and should_pop_operator(operator_stack[-1][0], lex):
+            op = operator_stack.pop()
+            postfixCodeGen('', ('NEG', 'math_op'))
+        operator_stack.append(('NEG', 'math_op'))
         parseSign()
         # Уточнити штуку
-        postfixCodeGen('', ('NEG', 'math_op'))
+
 
     l_type = parseTerm(operator_stack, operand_stack)
 
@@ -911,7 +916,7 @@ def parseArithmExpression(operator_stack=None, operand_stack=None):
         if tok == 'add_op':
             while operator_stack and should_pop_operator(operator_stack[-1][0], lex):
                 op = operator_stack.pop()
-                postfixCodeGen('', op)
+                postfixCodeGen('typemap', op)
             operator_stack.append((lex, tok))
             numRow += 1
             r_type = parseTerm(operator_stack, operand_stack)
@@ -940,7 +945,7 @@ def parseTerm(operator_stack=None, operand_stack=None):
         if tok == 'mult_op':
             while operator_stack and should_pop_operator(operator_stack[-1][0], lex):
                 op = operator_stack.pop()
-                postfixCodeGen('', op)
+                postfixCodeGen('typemap', op)
             operator_stack.append((lex, tok))
             numRow += 1
             r_type = parsePower(operator_stack, operand_stack)
@@ -991,7 +996,7 @@ def parseFactor():
 
     if tok in ('intnum', 'floatnum'):
         print(indent + 'in line {0} - token {1}'.format(numLine, (lex, tok)))
-        postfixCodeGen('const',(lex,tok))
+        postfixCodeGen('typemap',(lex,tok))
         numRow += 1
         factor_type = 'int' if tok == 'intnum' else 'float'
     elif tok == 'id':
@@ -1046,38 +1051,57 @@ def parseFunctionCall():
     numRow += 1
     parseToken('(', 'brackets_op')
 
+
+    # 2. Отримуємо очікувані типи з області видимості функції
     expected_types = []
     if func_params_count > 0:
         try:
             func_scope = st.tabName[name]
+
+            # Створюємо список [None, None, ...] розміром nParam
             param_list = [None] * func_params_count
+
             for param_name, param_attr in func_scope.items():
                 if param_name == 'declIn': continue
                 param_idx = param_attr[0]
                 param_kind = param_attr[1]
+
+                # Перевіряємо, що це параметр (визначений в `parseFunctionDeclaration`)
                 if param_kind == 'var' and 0 <= param_idx < func_params_count:
                     param_list[param_idx] = param_attr[2]
             if None in param_list:
                 st.failSem(f"Error reading parameters for function '{name}'", numLine)
+
             expected_types = param_list
+
         except KeyError:
+
             st.failSem(f"No scope found for function '{name}'", numLine)
 
+    # 3. Отримуємо типи аргументів з виклику
     actual_types = []
+    # Якщо є аргументи (наступний токен не ')')
     if numRow <= len_tableOfSymb and getSymb()[1] != ')':
         actual_types = parseArgumentList()
     if len(actual_types) != len(expected_types):
         st.failSem(f"The function ‘{name}’ expects {len(expected_types)} arguments, but received {len(actual_types)}",
                    numLine)
 
+    # 5. Перевіряємо типи
     for i, (actual_t, expected_t) in enumerate(zip(actual_types, expected_types)):
+        # Використовуємо check_assign, щоб перевірити, чи можна
+        # 'actual_t' (тип виразу) присвоїти 'expected_t' (тип параметра)
+        # Це дозволяє неявне приведення
         st.check_assign(expected_t, actual_t, numLine)
+
 
     parseToken(')', 'brackets_op')
     postfixCodeGen(func_name, (func_name, 'CALL'))
     if toView: configToPrint(func_name, numRow)
 
     indent = predIndt()
+
+    # 6. Повертаємо тип, який повертає функція
     return func_return_type
 
 
@@ -1109,6 +1133,7 @@ def parseReturnStatement():
         st.check_return_type(expected_type, expr_type, ret_line)
 
     else:
+        # Правило 9:
         if expected_type != 'void':
             st.failSem(
                 f"The function must return a value of type '{expected_type}', but ‘return’ is used without an expression",
@@ -1161,6 +1186,7 @@ def parseFunctionDeclaration():
 
     parseToken('func', 'keyword')
 
+    # 1. Ім'я функції
     func_line, func_name, func_tok = getSymb()
     if func_tok != 'id':
         failParse('expected function name', getSymb())
@@ -1176,8 +1202,12 @@ def parseFunctionDeclaration():
 
     num_params = 0
     parseToken('(', 'brackets_op')
+
+    # 3. Список параметрів
+    num_params = 0
     while numRow <= len_tableOfSymb and getSymb()[1] != ')':
         param_type = parseType()
+
         p_line, p_lex, p_tok = getSymb()
         if p_tok == 'id':
             attr = (num_params, 'var', param_type, 'assigned', '-')
@@ -1186,8 +1216,10 @@ def parseFunctionDeclaration():
             numRow += 1
         else:
             failParse('expected parameter identifier', getSymb())
+
         if getSymb()[1] == ',':
             parseToken(',', 'punct')
+
     parseToken(')', 'brackets_op')
 
     return_type = 'void'
@@ -1195,17 +1227,27 @@ def parseFunctionDeclaration():
         parseToken('=>', 'keyword')
         return_type = parseType()
 
+    # 5. Додаємо функцію в ST *батьківської* області
     func_attr = (len(st.tabName[parentContext]) - 1, 'func', return_type, 'assigned', num_params)
     st.insertName(parentContext, func_name, func_line, func_attr)
     st.functionContextStack.append({'name': func_name, 'return_type': return_type, 'has_return': False})
 
+    # 7. Розбираємо тіло функції
     parseToken('{', 'brackets_op')
+
+    # Цикл, поки не дійдемо до '}'
     while numRow <= len_tableOfSymb and getSymb()[1] != '}':
+
+        # Перевіряємо, що перед нами - оголошення чи інструкція
         numLine, lex, tok = getSymb()
+
         if lex == 'var' or lex == 'let':
+            # Якщо це 'var' або 'let', викликаємо parseDeclaration()
             parseDeclaration()
         else:
+            # В іншому випадку - це звичайна інструкція
             parseStatement()
+
     parseToken('}', 'brackets_op')
 
     func_context = st.functionContextStack[-1]
@@ -1259,19 +1301,19 @@ def postfixCodeGen(case,toTran):
     elif case == 'rval':
         lex,tok = toTran
         current_rpn_table.append((lex,'r-val'))
-    elif case == 'const':
-        lex,tok = toTran
-        if tok == 'intnum':
-            current_rpn_table.append((lex,'int'))
-        elif tok == 'floatnum':
-            current_rpn_table.append((lex,'float'))
-        elif tok == 'boolval':
-            current_rpn_table.append((lex, 'bool'))
-        elif tok == 'str':
-            current_rpn_table.append((lex, 'string'))
-    elif case == 'pow_op':
-        lex,tok = toTran
-        current_rpn_table.append(('^', tok))
+    elif case in ('typemap', 'pow_op'):
+        lex, tok = toTran
+        found = False
+        if tok == 'pow_op':
+            current_rpn_table.append(('^', tok))
+        elif case == 'typemap':
+            for key, value in type_map.items():
+                if tok == key or tok in (value if isinstance(value, list) else [value]):
+                    current_rpn_table.append((lex, value))
+                    found = True
+                    break
+            if not found:
+                current_rpn_table.append((lex, tok))
     else:
         lex,tok = toTran
         current_rpn_table.append((lex,tok))
@@ -1475,6 +1517,7 @@ def createLabel():
         tok = 'Labels conflict'
         print(tok)
         exit(1003)
+
     return (lexeme,tok)
 
 def generate_postfix_file(filename, vars_scope, rpn_table_to_save, labelTable_to_save):
@@ -1489,9 +1532,11 @@ def generate_postfix_file(filename, vars_scope, rpn_table_to_save, labelTable_to
             for var_name, attributes in vars_scope.items():
                 if var_name == "declIn":
                     continue
+                # attributes[2] це тип int, float, bool, string
                 f.write(f"\t{var_name}\t{attributes[2]}\n")
         f.write(")\n\n")
 
+        #для міток. окремо треба штуку зробити для кожної малої функції(як у прикладах psm)
         f.write(".labels(\n")
         if labelTable_to_save:
             for lbl, addr in labelTable_to_save.items():
