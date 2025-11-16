@@ -88,10 +88,15 @@ def parseStatement():
 
     numLine, lex, tok = getSymb()
     if tok == 'id':
-        id_info = (numLine, lex, tok)  # Зберігаємо l-value
-        print(indent + 'в рядку {0} - токен {1}'.format(numLine, (lex, tok)))
-        numRow += 1
-        parseAssign(id_info)  # Передаємо l-value
+        numLine, lex, tok = getSymb()
+        if tok == '(':
+            parseFunctionCall()
+        else:
+            id_info = (numLine, lex, tok)  # Зберігаємо l-value
+            print(indent + 'в рядку {0} - токен {1}'.format(numLine, (lex, tok)))
+            numRow += 1
+            parseAssign(id_info)  # Передаємо l-value
+
     elif (lex, tok) == ('if', 'keyword'):
         parseIf()
     elif (lex, tok) == ('while', 'keyword'):
@@ -221,7 +226,7 @@ def parsePrint():
     numLine, lex, tok = getSymb()
 
     if tok == 'id':
-        # Правило 3: Перевірка r-value
+        # Перевірка r-value
         st.findName(lex, st.currentContext, numLine)
         print(indent + 'in line {0} - token {1}'.format(numLine, (lex, tok)))
         parseExpression()
@@ -232,7 +237,6 @@ def parsePrint():
 
         numRow += 1
     else:
-        # Дозволимо друкувати будь-який вираз
         parseExpression()
 
     postfixCodeGen('OUT', ('OUT', 'out_op'))
@@ -249,11 +253,8 @@ def parseSwitch():
     global numRow
     indent = nextIndt()
     print(indent + 'parseSwitch():')
-
     m_end_switch = createLabel()
-
     parseToken('switch', 'keyword')
-
     numLine, lex, tok = getSymb()
     if tok != 'id':
         failParse('switch was expected after identifier', (numLine, lex, tok))
@@ -289,9 +290,7 @@ def parseCaseBlock(ident_info, m_end_switch):
     global numRow
     indent = nextIndt()
     print(indent + 'parseCaseBlock():')
-
     m_next_case = createLabel()
-
     parseToken('case', 'keyword')
 
     id_line, id_lex, id_tok = ident_info
@@ -441,7 +440,6 @@ def parseFor():
 
     # for keyword
     parseToken('for', 'keyword')
-
     # (
     parseToken('(', 'brackets_op')
 
@@ -937,12 +935,22 @@ def parseArithmExpression(operator_stack=None, operand_stack=None):
             operator_stack.append((lex, tok))
             numRow += 1
             r_type = parseTerm(operator_stack, operand_stack)
-            l_type = st.check_arithm_op(l_type, lex, r_type, numLine)
-            if isinstance(l_type, tuple):
-                # це (тип, конверсія)
-                result_type, conv = l_type
-                current_rpn_table.append((conv, 'conv'))
+            # Отримуємо (тип, конверсія) або просто (тип)
+            type_check_result = st.check_arithm_op(l_type, lex, r_type, numLine)
+
+            conv = None
+            if isinstance(type_check_result, tuple):
+                result_type, conv = type_check_result
                 l_type = result_type
+            else:
+                l_type = type_check_result
+            if conv == 'i2f_r':
+                current_rpn_table.append(('i2f', 'conv'))
+            elif conv == 'i2f_l':
+                # Конвертуємо лівий операнд (SWAP, i2f, SWAP)
+                current_rpn_table.append(('SWAP', 'stack_op'))
+                current_rpn_table.append(('i2f', 'conv'))
+                current_rpn_table.append(('SWAP', 'stack_op'))
 
         else:
             break
@@ -972,12 +980,23 @@ def parseTerm(operator_stack=None, operand_stack=None):
             operator_stack.append((lex, tok))
             numRow += 1
             r_type = parsePower(operator_stack, operand_stack)
-            l_type = st.check_arithm_op(l_type, lex, r_type, numLine)
-            if isinstance(l_type, tuple):
-                # це (тип, конверсія)
-                result_type, conv = l_type
-                current_rpn_table.append((conv, 'conv'))
+            # Отримуємо (тип, конверсія) або просто (тип)
+            type_check_result = st.check_arithm_op(l_type, lex, r_type, numLine)
+
+            conv = None
+            if isinstance(type_check_result, tuple):
+                result_type, conv = type_check_result
                 l_type = result_type
+            else:
+                l_type = type_check_result
+
+            if conv == 'i2f_r':
+                current_rpn_table.append(('i2f', 'conv'))
+            elif conv == 'i2f_l':
+                # Конвертуємо лівий операнд (SWAP, i2f, SWAP)
+                current_rpn_table.append(('SWAP', 'stack_op'))
+                current_rpn_table.append(('i2f', 'conv'))
+                current_rpn_table.append(('SWAP', 'stack_op'))
 
         else:
             break
@@ -1008,12 +1027,23 @@ def parsePower(operator_stack=None, operand_stack=None):
             operator_stack.append((lex, tok))
             numRow += 1
             r_type = parseFactor()
-            l_type = st.check_arithm_op(l_type, lex, r_type, numLine)
-            if isinstance(l_type, tuple):
-                # це (тип, конверсія)
-                result_type, conv = l_type
-                current_rpn_table.append((conv, 'conv'))
-                l_type = result_type
+
+            type_check_result = st.check_arithm_op(l_type, lex, r_type, numLine)
+
+            conv = None
+            if isinstance(type_check_result, tuple):
+                result_type, conv = type_check_result
+                l_type = result_type  # Оновлюємо l_type для наступної ітерації
+            else:
+                l_type = type_check_result
+            if conv == 'i2f_r':
+                # Конвертуємо правий операнд (який щойно додали в RPN)
+                current_rpn_table.append(('i2f', 'conv'))
+            elif conv == 'i2f_l':
+                # Конвертуємо лівий операнд (SWAP, i2f, SWAP)
+                current_rpn_table.append(('SWAP', 'stack_op'))
+                current_rpn_table.append(('i2f', 'conv'))
+                current_rpn_table.append(('SWAP', 'stack_op'))
 
         else:
             break
