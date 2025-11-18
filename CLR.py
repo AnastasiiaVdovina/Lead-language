@@ -203,4 +203,7 @@ def postfixCLR_codeGen(case, toTran):
             current_code_block.append(tl + 'call float32 [mscorlib]System.Convert::ToSingle(string)')
         # for string: do nothing, string already on stack
 
+    elif case == 'i2f':
+        current_code_block.append(tl + 'conv.r4')
+
     return True

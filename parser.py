@@ -299,6 +299,7 @@ def parseSwitch():
     setValLabel(m_end_switch)
     current_rpn_table.append(m_end_switch)
     current_rpn_table.append((':', 'colon'))
+    postfixCLR_codeGen('label', m_end_switch[0])
 
     parseToken('}', 'brackets_op')
     indent = predIndt()
@@ -354,6 +355,7 @@ def parseCaseBlock(ident_info, m_end_switch):
     # Додаємо m_next_case JF (перейти до наступного 'case', якщо НЕ дорівнює)
     current_rpn_table.append(m_next_case)
     current_rpn_table.append(('JF', 'jf'))
+    postfixCLR_codeGen('jf', m_next_case[0])
 
     parseToken(':', 'punct')
 
@@ -365,11 +367,13 @@ def parseCaseBlock(ident_info, m_end_switch):
 
     current_rpn_table.append(m_end_switch)
     current_rpn_table.append(('JMP', 'jump'))
+    postfixCLR_codeGen('jump', m_end_switch[0])
 
 
     setValLabel(m_next_case)
     current_rpn_table.append(m_next_case)
     current_rpn_table.append((':', 'colon'))
+    postfixCLR_codeGen('label', m_next_case[0])
 
     indent = predIndt()
 
@@ -415,11 +419,13 @@ def parseGuard():
     # Якщо умова 'false', стрибаємо на 'm_else:' (де починається блок else)
     current_rpn_table.append(m_else)
     current_rpn_table.append(('JF', 'jf'))
+    postfixCLR_codeGen('jf', m_else[0])
 
     # Якщо умова була 'true', ми доходимо сюди.
     # Безумовно стрибаємо в кінець (пропускаємо блок 'else')
     current_rpn_table.append(m_end)
     current_rpn_table.append(('JMP', 'jump'))
+    postfixCLR_codeGen('jump', m_end[0])
 
     # else
     parseToken('else', 'keyword')
@@ -428,6 +434,7 @@ def parseGuard():
     setValLabel(m_else)
     current_rpn_table.append(m_else)
     current_rpn_table.append((':', 'colon'))
+    postfixCLR_codeGen('label', m_else[0])
 
     # { StatementList }
     parseToken('{', 'brackets_op')
@@ -440,6 +447,7 @@ def parseGuard():
     setValLabel(m_end)
     current_rpn_table.append(m_end)
     current_rpn_table.append((':', 'colon'))
+    postfixCLR_codeGen('label', m_end[0])
 
     indent = predIndt()
 
