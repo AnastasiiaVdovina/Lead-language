@@ -82,7 +82,7 @@ def postfixCLR_codeGen(case, toTran):
     elif case == 'NEG':
         current_code_block.append(tl + 'neg')
 
-    elif case == 'pow_op':
+    elif case == '**':
         current_code_block.append(tl + 'call float64 [mscorlib]System.Math::Pow(float64, float64)')
 
     elif case == 'const':

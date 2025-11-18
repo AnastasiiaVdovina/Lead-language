@@ -37,7 +37,7 @@ base_file_name = ""
 current_labelTable = None
 current_rpn_table = None
 funcs_to_save = {}
-toView = True
+toView = False
 
 functions_data = {}
 
@@ -147,6 +147,7 @@ def parseWhile():
     current_rpn_table.append(m_cond)
     current_rpn_table.append((':', 'colon'))
 
+
     parseToken('while', 'keyword')
     parseToken('(', 'brackets_op')
 
@@ -226,7 +227,7 @@ def parseRepeatWhile():
 
 # Out = print ‘(‘ Ident | String | Expression ‘)’
 def parsePrint():
-    global numRow
+    global numRow, exp_type
     indent = nextIndt()
     print(indent + 'parsePrint():')
 
@@ -239,17 +240,24 @@ def parsePrint():
         # Перевірка r-value
         st.findName(lex, st.currentContext, numLine)
         print(indent + 'in line {0} - token {1}'.format(numLine, (lex, tok)))
-        parseExpression()
+        exp_type = parseExpression()
+        postfixCLR_codeGen('out_op', (lex, exp_type))
 
     elif tok == 'str':
         postfixCodeGen('typemap', (lex, tok))
+        postfixCLR_codeGen("str", lex)
+        postfixCLR_codeGen("out", lex)
+
         if toView: configToPrint(lex, numRow)
 
         numRow += 1
     else:
-        parseExpression()
+        exp_type = parseExpression()
+        postfixCLR_codeGen('out_op', (lex, exp_type))
 
     postfixCodeGen('OUT', ('OUT', 'out_op'))
+
+
     if toView: configToPrint('OUT', numRow)  # Для дебагу
     parseToken(')', 'brackets_op')
     indent = predIndt()
@@ -307,7 +315,7 @@ def parseCaseBlock(ident_info, m_end_switch):
     _cxt, _name, id_attr = st.findName(id_lex, st.currentContext, id_line)
     switch_var_type = id_attr[2]
     postfixCodeGen('rval', (id_lex, 'r-val'))
-
+    postfixCLR_codeGen('rval', id_lex)
     is_negative = False
     numLine_const, lex_const, tok_const = getSymb()
 
@@ -321,6 +329,7 @@ def parseCaseBlock(ident_info, m_end_switch):
         print(indent + f' case number: {"-" if is_negative else ""}{lex_const}')
         # RPN: ... a, 7776
         postfixCodeGen('typemap', (lex_const, tok_const))
+        postfixCLR_codeGen('const', (id_lex, id_tok))
         numRow += 1
         case_const_type = 'int'
     else:
@@ -328,6 +337,7 @@ def parseCaseBlock(ident_info, m_end_switch):
 
     if is_negative:
         postfixCodeGen('NEG', ('NEG', 'math_op'))
+        postfixCLR_codeGen('NEG', id_lex)
 
     result_type, conv = st.check_rel_op(switch_var_type, '==', case_const_type, numLine_const)
 
@@ -547,6 +557,7 @@ def parseIf():
 
     current_rpn_table.append(m_next_cond)
     current_rpn_table.append(('JF', 'jf'))
+    postfixCLR_codeGen('jf', m_next_cond[0])
 
     parseToken(')', 'brackets_op')
     parseToken('{', 'brackets_op')
@@ -557,10 +568,12 @@ def parseIf():
 
     current_rpn_table.append(m_end_chain)
     current_rpn_table.append(('JMP', 'jump'))
+    postfixCLR_codeGen('jump',m_end_chain[0])
 
     setValLabel(m_next_cond)
     current_rpn_table.append(m_next_cond)
     current_rpn_table.append((':', 'colon'))
+    postfixCLR_codeGen('label', m_next_cond[0])
 
     if numRow <= len_tableOfSymb and getSymb()[1] == 'else':
         print(indent + '  founded else')
@@ -579,6 +592,7 @@ def parseIf():
     setValLabel(m_end_chain)
     current_rpn_table.append(m_end_chain)
     current_rpn_table.append((':', 'colon'))
+    postfixCLR_codeGen('label', m_end_chain[0])
 
     indent = predIndt()
 
@@ -599,6 +613,7 @@ def parseElseIfBlock(m_end_chain):
 
     current_rpn_table.append(m_next_cond)
     current_rpn_table.append(('JF', 'jf'))
+    postfixCLR_codeGen('jf', m_next_cond[0])
 
     parseToken(')', 'brackets_op')
     parseToken('{', 'brackets_op')
@@ -609,10 +624,12 @@ def parseElseIfBlock(m_end_chain):
 
     current_rpn_table.append(m_end_chain)
     current_rpn_table.append(('JMP', 'jump'))
+    postfixCLR_codeGen("jump", m_end_chain[0])
 
     setValLabel(m_next_cond)
     current_rpn_table.append(m_next_cond)
     current_rpn_table.append((':', 'colon'))
+    postfixCLR_codeGen('label', m_next_cond[0])
 
     # Рекурсивна обробка наступного 'else if' / 'else'
     if numRow <= len_tableOfSymb and getSymb()[1] == 'else':
@@ -662,9 +679,11 @@ def parseDeclaration():
 
         for id_line, id_lex, id_tok in ident_list:
             postfixCodeGen('lval', (id_lex, id_tok))
+            postfixCLR_codeGen('lval', id_lex)
         # 4. Отримуємо тип виразу
         expr_type = parseExpression()
         postfixCodeGen('typemap', ('=', 'assign_op'))
+        postfixCLR_codeGen('=', declared_type)
         # 5. Перевіряємо типи (Правила 5, 16, 17)
         st.check_assign(declared_type, expr_type, numLine)
 
@@ -802,11 +821,13 @@ def parseExpression():
     if tok == 'boolval' or lex == '!':
         expr_type = parseBoolExpression()
         postfixCodeGen("typemap", (lex,tok))
+        postfixCLR_codeGen("boolval", lex)
         indent = predIndt()
         return expr_type
     elif tok == 'str':
         numRow += 1
         postfixCodeGen("typemap", (lex, tok))
+        postfixCLR_codeGen("str", lex)
         indent = predIndt()
 
         return 'string'
@@ -833,6 +854,7 @@ def parseExpression():
                 current_rpn_table.append(('SWAP', 'stack_op'))
 
             postfixCodeGen("typemap", (op_lex, tok))
+            postfixCLR_codeGen("rel_op", op_lex)
             expr_type = result_type  # 'bool'
 
             indent = predIndt()
@@ -841,6 +863,7 @@ def parseExpression():
     while operator_stack:
         op = operator_stack.pop()
         postfixCodeGen('typemap', op)
+        postfixCLR_codeGen(op[0], op[0])
 
     indent = predIndt()
     return expr_type
@@ -926,6 +949,7 @@ def parseArithmExpression(operator_stack=None, operand_stack=None):
         while operator_stack and should_pop_operator(operator_stack[-1][0], lex):
             op = operator_stack.pop()
             postfixCodeGen('', ('NEG', 'math_op'))
+            postfixCLR_codeGen('NEG', lex)
         operator_stack.append(('NEG', 'math_op'))
         parseSign()
         # Уточнити штуку
@@ -942,6 +966,7 @@ def parseArithmExpression(operator_stack=None, operand_stack=None):
             while operator_stack and should_pop_operator(operator_stack[-1][0], lex):
                 op = operator_stack.pop()
                 postfixCodeGen('typemap', op)
+                postfixCLR_codeGen(op[0], op[0])
             operator_stack.append((lex, tok))
             numRow += 1
             r_type = parseTerm(operator_stack, operand_stack)
@@ -987,6 +1012,7 @@ def parseTerm(operator_stack=None, operand_stack=None):
             while operator_stack and should_pop_operator(operator_stack[-1][0], lex):
                 op = operator_stack.pop()
                 postfixCodeGen('typemap', op)
+                postfixCLR_codeGen(op[0], op[0])
             operator_stack.append((lex, tok))
             numRow += 1
             r_type = parsePower(operator_stack, operand_stack)
@@ -1034,6 +1060,8 @@ def parsePower(operator_stack=None, operand_stack=None):
             while operator_stack and should_pop_operator(operator_stack[-1][0], lex):
                 op = operator_stack.pop()
                 postfixCodeGen('pow_op', op)
+                postfixCLR_codeGen("pow_op", op)
+
             operator_stack.append((lex, tok))
             numRow += 1
             r_type = parseFactor()
@@ -1072,6 +1100,7 @@ def parseFactor():
     if tok in ('intnum', 'floatnum'):
         print(indent + 'in line {0} - token {1}'.format(numLine, (lex, tok)))
         postfixCodeGen('typemap',(lex,tok))
+        postfixCLR_codeGen('const', (lex, tok))
         numRow += 1
         factor_type = 'int' if tok == 'intnum' else 'float'
     elif tok == 'id':
@@ -1090,6 +1119,7 @@ def parseFactor():
 
             print(indent + 'в рядку {0} - токен {1}'.format(numLine, (lex, tok)))
             postfixCodeGen('rval', (lex, tok))
+            postfixCLR_codeGen('rval', lex)
             numRow += 1
             factor_type = id_type
 
@@ -1440,6 +1470,7 @@ def parseAssign(id_info):
         failParse('token mismatch', (assign_line, assign_lex, assign_tok, 'assignment operator (=, +=, *=, etc)'))
 
     postfixCodeGen('lval', (id_lex, id_tok))
+    postfixCLR_codeGen('lval', id_lex)
     parseToken(assign_lex, assign_tok)
 
 
@@ -1449,7 +1480,7 @@ def parseAssign(id_info):
     numLine, lex, tok = getSymb()
     if (lex, tok) == ('input', 'keyword') and assign_tok == 'assign_op':
         # Особливий випадок для input()
-        parseInput()
+        parseInput(id_lex, id_type)
         if id_type not in ('int', 'float', 'string'):
             st.failSem(f"input() can only be assigned to ‘int’, ‘float’, or ‘string’, but not to'{id_type}'",
                        assign_line)
@@ -1513,7 +1544,7 @@ def parseAssign(id_info):
     indent = predIndt()
 
 
-def parseInput():
+def parseInput(lex,type):
     global numRow
     indent = nextIndt()
     print(indent + 'parseInput():')
@@ -1525,6 +1556,7 @@ def parseInput():
     parseToken(')', 'brackets_op')
 
     postfixCodeGen('INP', ('INP', 'inp_op'))
+    postfixCLR_codeGen('input', (lex,type))
     if toView: configToPrint('INP', numRow)
     indent = predIndt()
     return 'string'  # Введення з клавіатури - це завжди рядок
