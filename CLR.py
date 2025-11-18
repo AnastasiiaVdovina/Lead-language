@@ -153,7 +153,9 @@ def postfixCLR_codeGen(case, toTran):
 
     elif case == 'out_op':
         values = ""
+
         lex, type = toTran
+
         if type in ('bool', 'boolval'):
             values += "\t" + "call void [mscorlib]System.Console::WriteLine(bool) \n"
         elif type in ('int', 'intnum'):
@@ -163,7 +165,7 @@ def postfixCLR_codeGen(case, toTran):
         elif type in ('string', 'str'):
             values += '\t' + "call void [mscorlib]System.Console::WriteLine(string) \n"
 
-        codeCLR.append(values)
+        current_code_block.append(values)
 
     # elif case == 'out_op':
     #     values = ""
@@ -180,31 +182,25 @@ def postfixCLR_codeGen(case, toTran):
         values = ""
         lex = toTran
         #values += "\tldstr \"" + lex + "\"\n"
-        values += "\tcall void [mscorlib]System.Console::Write(string) \n"
-        codeCLR.append(values + "\n")
+        values += "\tcall void [mscorlib]System.Console::WriteLine(string) \n"
+        current_code_block.append(values + '\n')
 
     # INPUT з підтримкою аргументів
     elif case == 'input':
-        lex, Type = toTran
+        varname, Type = toTran  # varname потрібен лише для prompt text
 
-        # Виведення промпта
-        current_code_block.append(tl + f'ldstr "{lex} -> "')
+        # prompt
+        current_code_block.append(tl + f'ldstr \"{varname} -> \"')
         current_code_block.append(tl + 'call void [mscorlib]System.Console::Write(string)')
 
-        # Зчитування
+        # read
         current_code_block.append(tl + 'call string [mscorlib]System.Console::ReadLine()')
 
-        # Конвертація
+        # conversion - leave converted value on the stack
         if Type in ('int', 'intnum', 'int32'):
             current_code_block.append(tl + 'call int32 [mscorlib]System.Convert::ToInt32(string)')
         elif Type in ('float', 'floatnum', 'float32'):
             current_code_block.append(tl + 'call float32 [mscorlib]System.Convert::ToSingle(string)')
-
-        # Збереження (starg або stloc)
-        if current_func_context["is_function"] and lex in current_func_context["args"]:
-            arg_idx = current_func_context["args"].index(lex)
-            current_code_block.append(tl + f'starg {arg_idx}')
-        else:
-            current_code_block.append(tl + f'stloc {lex}')
+        # for string: do nothing, string already on stack
 
     return True

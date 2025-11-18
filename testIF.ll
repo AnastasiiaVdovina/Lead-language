@@ -1,15 +1,20 @@
 //оголошення змінних
+
+func sayHello() {
+    print("Hi")
+}
+sayHello()
+
 var a: int
-var c: int
-var s: float
-var d: float
-
-
-a = 10 + 2 - 5 * 2
-c = 200 * a
-s = 0.5 / 1.0
-d = 10.0
+a = 2
 print(a)
-print(c)
-print(s)
-print(d)
+
+a = input()
+
+print(a)
+
+if (a>3) {
+    print("Success")
+} else {
+    print("Condition isn`t false")
+}

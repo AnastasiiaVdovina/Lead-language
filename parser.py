@@ -23,7 +23,7 @@ print('-' * 50)
 
 # номер рядка таблиці розбору/лексем/символів ПРОГРАМИ tableOfSymb
 numRow = 1
-
+counter = 0
 # довжина таблиці символів програми
 # він же - номер останнього запису
 len_tableOfSymb = len(tableOfSymb)
@@ -95,10 +95,13 @@ def parseStatement():
 
     numLine, lex, tok = getSymb()
     if tok == 'id':
+        numRow+=1
         numLine, lex, tok = getSymb()
-        if tok == '(':
+        numRow -= 1
+        if lex == '(':
             parseFunctionCall()
         else:
+            numLine, lex, tok = getSymb()
             id_info = (numLine, lex, tok)  # Зберігаємо l-value
             print(indent + 'в рядку {0} - токен {1}'.format(numLine, (lex, tok)))
             numRow += 1
@@ -1547,12 +1550,15 @@ def parseToken(lexeme, token):
 
 
 def getSymb():
+    global counter
     if numRow > len_tableOfSymb:
        # return None
         failParse('getSymb(): unexpected end of the program', numRow)
     numLine, lexeme, token, _ = tableOfSymb[numRow]
+
     # if token == 'EOF':
     #     exit(0)
+    counter+=1
     return numLine, lexeme, token
 
 
