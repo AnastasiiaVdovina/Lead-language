@@ -350,13 +350,16 @@ def parseCaseBlock(ident_info, m_end_switch):
     result_type, conv = st.check_rel_op(switch_var_type, '==', case_const_type, numLine_const)
 
     if conv == 'i2f_r':
-
         current_rpn_table.append(('i2f', 'conv'))
+        #postfixCLR_codeGen('i2f', None)
     elif conv == 'i2f_l':
 
         current_rpn_table.append(('SWAP', 'stack_op'))
+        #postfixCLR_codeGen('SWAP', None)
         current_rpn_table.append(('i2f', 'conv'))
+        #postfixCLR_codeGen('i2f', None)
         current_rpn_table.append(('SWAP', 'stack_op'))
+        #postfixCLR_codeGen('SWAP', None)
 
     postfixCodeGen('typemap', ('==', 'rel_op'))
     postfixCLR_codeGen('rel_op', '==')
