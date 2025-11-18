@@ -146,7 +146,7 @@ def parseWhile():
     setValLabel(m_cond)
     current_rpn_table.append(m_cond)
     current_rpn_table.append((':', 'colon'))
-
+    postfixCLR_codeGen('label', m_cond[0])
 
     parseToken('while', 'keyword')
     parseToken('(', 'brackets_op')
@@ -158,6 +158,7 @@ def parseWhile():
     # Якщо умова 'false', стрибаємо на кінець циклу
     current_rpn_table.append(m_end)
     current_rpn_table.append(('JF', 'jf'))
+    postfixCLR_codeGen('jf', m_end[0])
 
     parseToken('{', 'brackets_op')
 
@@ -169,11 +170,13 @@ def parseWhile():
     # Після виконання тіла, стрибаємо назад на перевірку умови
     current_rpn_table.append(m_cond)
     current_rpn_table.append(('JMP', 'jump'))
+    postfixCLR_codeGen('jump', m_cond[0])
 
     # Встановлюємо кінцеву мітку
     setValLabel(m_end)
     current_rpn_table.append(m_end)
     current_rpn_table.append((':', 'colon'))
+    postfixCLR_codeGen('label', m_end[0])
 
     indent = predIndt()
 
@@ -195,6 +198,7 @@ def parseRepeatWhile():
     setValLabel(m_start_body)
     current_rpn_table.append(m_start_body)
     current_rpn_table.append((':', 'colon'))
+    postfixCLR_codeGen('label', m_start_body[0])
 
     parseToken('repeat', 'keyword')
     parseToken('{', 'brackets_op')
@@ -211,16 +215,19 @@ def parseRepeatWhile():
     # Якщо умова 'false', стрибаємо на кінець
     current_rpn_table.append(m_end)
     current_rpn_table.append(('JF', 'jf'))
+    postfixCLR_codeGen('jf', m_end[0])
 
     # (Якщо ми тут, умова була 'true')
     # Стрибаємо назад на початок тіла
     current_rpn_table.append(m_start_body)
     current_rpn_table.append(('JMP', 'jump'))
+    postfixCLR_codeGen('jump', m_start_body[0])
 
     # встановлюємо кінцеву мітку
     setValLabel(m_end)
     current_rpn_table.append(m_end)
     current_rpn_table.append((':', 'colon'))
+    postfixCLR_codeGen('label', m_end[0])
 
     indent = predIndt()
 
@@ -330,7 +337,7 @@ def parseCaseBlock(ident_info, m_end_switch):
         print(indent + f' case number: {"-" if is_negative else ""}{lex_const}')
         # RPN: ... a, 7776
         postfixCodeGen('typemap', (lex_const, tok_const))
-        postfixCLR_codeGen('const', (id_lex, id_tok))
+        postfixCLR_codeGen('const', (lex_const, tok_const))
         numRow += 1
         case_const_type = 'int'
     else:
@@ -352,6 +359,7 @@ def parseCaseBlock(ident_info, m_end_switch):
         current_rpn_table.append(('SWAP', 'stack_op'))
 
     postfixCodeGen('typemap', ('==', 'rel_op'))
+    postfixCLR_codeGen('rel_op', '==')
     # Додаємо m_next_case JF (перейти до наступного 'case', якщо НЕ дорівнює)
     current_rpn_table.append(m_next_case)
     current_rpn_table.append(('JF', 'jf'))
@@ -489,6 +497,7 @@ def parseFor():
     setValLabel(m_cond)
     current_rpn_table.append(m_cond)
     current_rpn_table.append((':', 'colon'))
+    postfixCLR_codeGen('label', m_cond[0])
 
     parseBooleanCondition()
 
@@ -496,9 +505,11 @@ def parseFor():
     # Якщо умова 'false' стрибаємо на кінець
     current_rpn_table.append(m_end)
     current_rpn_table.append(('JF', 'jf'))
+    postfixCLR_codeGen('jf', m_end[0])
     # Якщо умова 'true' стрибаємо на тіло
     current_rpn_table.append(m_body)
     current_rpn_table.append(('JMP', 'jump'))
+    postfixCLR_codeGen('jump', m_body[0])
 
     # ;
     parseToken(';', 'punct')
@@ -508,6 +519,7 @@ def parseFor():
     setValLabel(m_incr)
     current_rpn_table.append(m_incr)
     current_rpn_table.append((':', 'colon'))
+    postfixCLR_codeGen('label', m_incr[0])
 
     numLine, lex, tok = getSymb()
     if tok == 'id':
@@ -521,6 +533,7 @@ def parseFor():
     # Стрибаємо назад на умову
     current_rpn_table.append(m_cond)
     current_rpn_table.append(('JMP', 'jump'))
+    postfixCLR_codeGen('jump', m_cond[0])
 
     # )
     parseToken(')', 'brackets_op')
@@ -529,6 +542,7 @@ def parseFor():
     setValLabel(m_body)
     current_rpn_table.append(m_body)
     current_rpn_table.append((':', 'colon'))
+    postfixCLR_codeGen('label', m_body[0])
 
     parseToken('{', 'brackets_op')
     while numRow <= len_tableOfSymb and getSymb()[1] != '}':
@@ -539,11 +553,13 @@ def parseFor():
     # Це відбувається ПІСЛЯ виконання тіла
     current_rpn_table.append(m_incr)
     current_rpn_table.append(('JMP', 'jump'))
+    postfixCLR_codeGen('jump', m_incr[0])
 
     # становлюємо кінцеву мітку
     setValLabel(m_end)
     current_rpn_table.append(m_end)
     current_rpn_table.append((':', 'colon'))
+    postfixCLR_codeGen('label', m_end[0])
 
     indent = predIndt()
 
