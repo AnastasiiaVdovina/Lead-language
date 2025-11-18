@@ -4,6 +4,12 @@ from lexer import lex
 from lexer import tableOfSymb
 from lexer import tableOfId
 from lexer import tableOfConst
+from CLR import postfixCLR_codeGen
+from CLR import codeCLR
+from CLR import switchContextToMain
+import CLR
+
+from saveCIL import saveCIL
 
 import symbol_table as st
 
@@ -33,7 +39,8 @@ current_rpn_table = None
 funcs_to_save = {}
 toView = True
 
-toView = True
+functions_data = {}
+
 supported_tokens = (
         "int", "float", "bool", "string", "l-val", "r-val",
         "label", "colon", "assign_op", "math_op", "rel_op",
@@ -1162,6 +1169,7 @@ def parseFunctionCall():
 
     parseToken(')', 'brackets_op')
     postfixCodeGen(func_name, (func_name, 'CALL'))
+    CLR.postfixCLR_codeGen('CALL', (func_name, 'CALL'))  # CIL
     if toView: configToPrint(func_name, numRow)
 
     indent = predIndt()
@@ -1205,6 +1213,7 @@ def parseReturnStatement():
                 ret_line)
 
     postfixCodeGen('RET', ('RET', 'RET'))
+    CLR.postfixCLR_codeGen('RET', ('RET', 'RET'))  # Для CIL
     if toView: configToPrint('RET', ret_line)
 
     indent = predIndt()
@@ -1239,7 +1248,6 @@ def parseFunctionDeclaration():
     print(indent + 'parseFunctionDeclaration():')
 
     m_skip_end = createLabel()
-
     parent_rpn_table = current_rpn_table
     parent_labelTable = current_labelTable
 
@@ -1249,9 +1257,9 @@ def parseFunctionDeclaration():
     current_rpn_table = func_rpn_table
     current_labelTable = func_labelTable
 
+
     parseToken('func', 'keyword')
 
-    # 1. Ім'я функції
     func_line, func_name, func_tok = getSymb()
     if func_tok != 'id':
         failParse('expected function name', getSymb())
@@ -1266,17 +1274,19 @@ def parseFunctionDeclaration():
     print(f"DEBUG: Entering scope {st.currentContext}, parent {parentContext}")
 
     num_params = 0
+    params = []
     parseToken('(', 'brackets_op')
-
-    # 3. Список параметрів
-    num_params = 0
     while numRow <= len_tableOfSymb and getSymb()[1] != ')':
         param_type = parseType()
 
         p_line, p_lex, p_tok = getSymb()
         if p_tok == 'id':
+            # Додаємо в таблицю символів
             attr = (num_params, 'var', param_type, 'assigned', '-')
             st.insertName(st.currentContext, p_lex, p_line, attr)
+
+            params.append((p_lex, param_type))
+
             num_params += 1
             numRow += 1
         else:
@@ -1287,34 +1297,35 @@ def parseFunctionDeclaration():
 
     parseToken(')', 'brackets_op')
 
+    # Тип повернення
     return_type = 'void'
     if getSymb()[1] == '=>':
         parseToken('=>', 'keyword')
         return_type = parseType()
 
-    # 5. Додаємо функцію в ST *батьківської* області
     func_attr = (len(st.tabName[parentContext]) - 1, 'func', return_type, 'assigned', num_params)
     st.insertName(parentContext, func_name, func_line, func_attr)
     st.functionContextStack.append({'name': func_name, 'return_type': return_type, 'has_return': False})
 
-    # Додаємо функцію в funcs_to_save
+    arg_names = [p[0] for p in params]
+    arg_types = [p[1] for p in params]
+    clr_arg_types = [CLR.mapTypeToCIL(t) for t in arg_types]
+
+    CLR.func_signatures[func_name] = {'ret': CLR.mapTypeToCIL(return_type), 'args': clr_arg_types}
+
     full_func_name = f"{base_file_name}${func_name}"
     funcs_to_save[func_name] = (return_type, num_params)
 
-    # 7. Розбираємо тіло функції
+    func_code_list = []
+    CLR.switchContextToFunction(func_name, arg_names, func_code_list)
+
     parseToken('{', 'brackets_op')
 
-    # Цикл, поки не дійдемо до '}'
     while numRow <= len_tableOfSymb and getSymb()[1] != '}':
-
-        # Перевіряємо, що перед нами - оголошення чи інструкція
         numLine, lex, tok = getSymb()
-
         if lex == 'var' or lex == 'let':
-            # Якщо це 'var' або 'let', викликаємо parseDeclaration()
             parseDeclaration()
         else:
-            # В іншому випадку - це звичайна інструкція
             parseStatement()
 
     parseToken('}', 'brackets_op')
@@ -1327,19 +1338,37 @@ def parseFunctionDeclaration():
 
     # Якщо функція void і не має явного return, додаємо RET
     if return_type == 'void' and not func_context['has_return']:
-        postfixCodeGen('RET', ('RET', 'RET'))  # Пише у func_rpn_table
+        postfixCodeGen('RET', ('RET', 'RET'))  # Для RPN файлу
+        CLR.postfixCLR_codeGen('RET', ('RET', 'RET'))  # Для CLR (il)
         if toView: configToPrint('RET (implicit)', numRow)
 
     func_file_path = f"{base_file_name}${func_name}"
-
     generate_postfix_file(func_file_path, st.tabName[func_name], func_rpn_table, func_labelTable)
+
+
+    locals_list = []
+    func_scope = st.tabName[func_name]
+    for var_name, attr in func_scope.items():
+        if var_name == 'declIn': continue
+        # Якщо це локальна змінна (індекс >= кількості параметрів)
+        if attr[1] == 'var' and attr[0] >= len(params):
+            locals_list.append((var_name, CLR.mapTypeToCIL(attr[2])))
+
+    functions_data[func_name] = {
+        'ret': CLR.mapTypeToCIL(return_type),
+        'args': [(n, CLR.mapTypeToCIL(t)) for n, t in params],
+        'locals': locals_list,
+        'code': func_code_list
+    }
 
     st.currentContext = parentContext
     st.functionContextStack.pop()
-    print(f"DEBUG: Exiting scope, back to {st.currentContext}")
 
+    CLR.switchContextToMain()
     current_rpn_table = parent_rpn_table
     current_labelTable = parent_labelTable
+
+    print(f"DEBUG: Exiting scope, back to {st.currentContext}")
 
     setValLabel(m_skip_end)
     current_rpn_table.append(m_skip_end)
@@ -1424,6 +1453,7 @@ def parseAssign(id_info):
         print(f"Semantic: Semantically accepting input() into var of type '{id_type}'")
 
         current_rpn_table.append(('=', 'assign_op'))
+        postfixCLR_codeGen('=', id_type)
         if toView: configToPrint('=', numRow)
 
         # postfixCodeGen('', ('input', 'func'))
@@ -1437,6 +1467,7 @@ def parseAssign(id_info):
             # (Правила 16, 17)
             st.check_assign(id_type, expr_type, assign_line)
             current_rpn_table.append(('=', 'assign_op'))
+            postfixCLR_codeGen('=', id_type)
             if toView: configToPrint(lex, numRow)
         elif assign_tok in ('add_ass_op', 'mult_ass_op'):
             # Складне присвоєння (a += b)
@@ -1638,6 +1669,7 @@ def compileToPostfix(fileName):
 
     current_rpn_table = main_rpn_table
     current_labelTable = main_labelTable
+    CLR.switchContextToMain()
 
 
     print('compileToPostfix: lexer Start Up\n')
@@ -1654,10 +1686,13 @@ def compileToPostfix(fileName):
         if FSuccess == (True):
 
             generate_postfix_file(base_file_name, st.tabName['univ'], main_rpn_table, main_labelTable, funcs_to_save)
+            saveCIL(base_file_name, st.tabName['univ'], CLR.codeCLR, functions_data)
 
         if not FSuccess:
             print(f"Postfix-код не було збережено у файл {fileName}")
     return FSuccess
+
+
 
 def configToPrint(lex,numRow):
     stage = '\nTranslation step\n'
@@ -1669,6 +1704,7 @@ def configToPrint(lex,numRow):
 # запуск парсера
 
 compileToPostfix('testIF')
+
 # if FSuccess == ('Lexer', True):
 #     parseProgram()
 #     print("\nParser: Parsing completed successfully")

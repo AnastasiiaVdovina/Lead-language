@@ -106,7 +106,7 @@ tableOfSymb = {}  # Таблиця символів програми (табли
 
 state = initState  # поточний стан
 
-f = open('testfiles/testIF.ll', 'r', encoding="utf-8")
+f = open('testIF.ll', 'r', encoding="utf-8")
 sourceCode = f.read()
 sourceCode += " \n"
 f.close()
@@ -199,7 +199,8 @@ def processing():
     # --- рядкові константи ---
     if state == 20:
         token = getToken(state, lexeme)
-        lexeme = lexeme[:-1]+'"'
+        # lexeme = lexeme[:-1]+'"'
+        lexeme += '"'
         index = indexIdConst(state, lexeme)
         print(f"{numLine:<3d} {lexeme:<10s} {token:<10s} {index:<5d}")
         tableOfSymb[len(tableOfSymb) + 1] = (numLine, lexeme, token, index)
