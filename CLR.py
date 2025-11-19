@@ -206,15 +206,11 @@ def postfixCLR_codeGen(case, toTran):
     elif case == 'i2f':
         current_code_block.append(tl + 'conv.r4')
 
-    elif case == 'i2f_left':
-            current_code_block.append(tl + 'stloc.s 0')
-            current_code_block.append(tl + 'conv.r4')
-            current_code_block.append(tl + 'ldloc.s 0')
-    elif case == 'SWAP':
-        current_code_block.append(tl + 'stloc __t1')
-        current_code_block.append(tl + 'stloc __t0')
-        current_code_block.append(tl + 'ldloc __t1')
-        current_code_block.append(tl + 'ldloc __t0')
+    elif case == 'i2f_l':
+        temp_var = "__temp_f"
+        current_code_block.append(tl + f'stloc {temp_var} // save top (float)')
+        current_code_block.append(tl + 'conv.r4      // convert under-top (int->float)')
+        current_code_block.append(tl + f'ldloc {temp_var} // restore top (float)')
 
 
     return True
