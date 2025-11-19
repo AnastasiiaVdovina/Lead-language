@@ -1104,7 +1104,6 @@ def parsePower(operator_stack=None, operand_stack=None):
             r_type = parseFactor()
 
             type_check_result = st.check_arithm_op(l_type, lex, r_type, numLine)
-
             conv = None
             if isinstance(type_check_result, tuple):
                 result_type, conv = type_check_result

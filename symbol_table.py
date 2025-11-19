@@ -117,6 +117,7 @@ def check_arithm_op(l_type, op, r_type, line):
             return 'int'  # Цілочисельне ділення
         return 'int'
 
+
     failSem(f"Unknown combination of types for operation ‘{op}’: ‘{l_type}’ and '{r_type}'", line)
     return 'type_error'
 
