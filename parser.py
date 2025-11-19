@@ -711,6 +711,8 @@ def parseDeclaration():
             postfixCLR_codeGen('lval', id_lex)
         # 4. Отримуємо тип виразу
         expr_type = parseExpression()
+        if declared_type == 'float' and expr_type == 'int':
+            postfixCLR_codeGen('i2f', '')  # Це додасть conv.r4
         postfixCodeGen('typemap', ('=', 'assign_op'))
         postfixCLR_codeGen('=', declared_type)
         # 5. Перевіряємо типи (Правила 5, 16, 17)
@@ -1541,6 +1543,9 @@ def parseAssign(id_info):
 
             # Конверсія int->float при присвоєнні
             if id_type == 'float' and expr_type == 'int':
+                print('*'*40)
+                print(id_type, expr_type)
+                print('*' * 40)
                 postfixCLR_codeGen('i2f', '')
                 current_rpn_table.append(('i2f', 'conv'))
 
@@ -1605,6 +1610,8 @@ def parseAssign(id_info):
     st.updateNameVal(id_lex, st.currentContext, id_line, 'assigned')
 
     indent = predIndt()
+
+
 def parseInput(lex,type):
     global numRow
     indent = nextIndt()
