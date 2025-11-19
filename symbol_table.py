@@ -102,11 +102,11 @@ def check_arithm_op(l_type, op, r_type, line):
         failSem(f"The arithmetic operation ‘{op}’ cannot be applied to ‘{l_type}’ and ‘{r_type}’", line)
         return 'type_error'
 
-    # --- Правило 15: int + float -> float ---
+    # --- Правило 15: int + float -> float (з позначенням конверсії) ---
     if l_type == 'float' and r_type == 'int':
-        return 'float'
+        return ('float', 'i2f_r')  # Конвертувати правий операнд
     if l_type == 'int' and r_type == 'float':
-        return 'float'
+        return ('float', 'i2f_l')  # Конвертувати лівий операнд
 
     if l_type == 'float' and r_type == 'float':
         return 'float'

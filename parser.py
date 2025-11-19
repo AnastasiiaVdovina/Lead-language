@@ -352,6 +352,7 @@ def parseCaseBlock(ident_info, m_end_switch):
     if conv == 'i2f_r':
         current_rpn_table.append(('i2f', 'conv'))
         #postfixCLR_codeGen('i2f', None)
+        postfixCLR_codeGen('i2f', '')
     elif conv == 'i2f_l':
 
         current_rpn_table.append(('SWAP', 'stack_op'))
@@ -360,6 +361,7 @@ def parseCaseBlock(ident_info, m_end_switch):
         #postfixCLR_codeGen('i2f', None)
         current_rpn_table.append(('SWAP', 'stack_op'))
         #postfixCLR_codeGen('SWAP', None)
+        postfixCLR_codeGen('i2f_left', '')
 
     postfixCodeGen('typemap', ('==', 'rel_op'))
     postfixCLR_codeGen('rel_op', '==')
@@ -874,11 +876,13 @@ def parseExpression():
 
             if conv == 'i2f_r':
                 current_rpn_table.append(('i2f', 'conv'))
+                postfixCLR_codeGen('i2f', '')
 
             elif conv == 'i2f_l':
                 current_rpn_table.append(('SWAP', 'stack_op'))
                 current_rpn_table.append(('i2f', 'conv'))
                 current_rpn_table.append(('SWAP', 'stack_op'))
+                postfixCLR_codeGen('i2f_left', '')
 
             postfixCodeGen("typemap", (op_lex, tok))
             postfixCLR_codeGen("rel_op", op_lex)
@@ -1008,11 +1012,13 @@ def parseArithmExpression(operator_stack=None, operand_stack=None):
                 l_type = type_check_result
             if conv == 'i2f_r':
                 current_rpn_table.append(('i2f', 'conv'))
+                postfixCLR_codeGen('i2f', '')
             elif conv == 'i2f_l':
                 # Конвертуємо лівий операнд (SWAP, i2f, SWAP)
                 current_rpn_table.append(('SWAP', 'stack_op'))
                 current_rpn_table.append(('i2f', 'conv'))
                 current_rpn_table.append(('SWAP', 'stack_op'))
+                postfixCLR_codeGen('i2f_left', '')
 
         else:
             break
@@ -1055,13 +1061,17 @@ def parseTerm(operator_stack=None, operand_stack=None):
 
             if conv == 'i2f_r':
                 current_rpn_table.append(('i2f', 'conv'))
+                postfixCLR_codeGen('i2f', '')
             elif conv == 'i2f_l':
                 # Конвертуємо лівий операнд (SWAP, i2f, SWAP)
                 current_rpn_table.append(('SWAP', 'stack_op'))
                 current_rpn_table.append(('i2f', 'conv'))
                 current_rpn_table.append(('SWAP', 'stack_op'))
+                postfixCLR_codeGen('i2f_left', '')
 
         else:
+
+
             break
 
     indent = predIndt()
@@ -1104,17 +1114,20 @@ def parsePower(operator_stack=None, operand_stack=None):
             if conv == 'i2f_r':
                 # Конвертуємо правий операнд (який щойно додали в RPN)
                 current_rpn_table.append(('i2f', 'conv'))
+                postfixCLR_codeGen('i2f', '')
             elif conv == 'i2f_l':
                 # Конвертуємо лівий операнд (SWAP, i2f, SWAP)
                 current_rpn_table.append(('SWAP', 'stack_op'))
                 current_rpn_table.append(('i2f', 'conv'))
                 current_rpn_table.append(('SWAP', 'stack_op'))
+                postfixCLR_codeGen('i2f_left', '')
 
         else:
             break
 
     indent = predIndt()
     return l_type
+
 
 def parseFactor():
     global numRow
@@ -1126,23 +1139,24 @@ def parseFactor():
 
     if tok in ('intnum', 'floatnum'):
         print(indent + 'in line {0} - token {1}'.format(numLine, (lex, tok)))
-        postfixCodeGen('typemap',(lex,tok))
+        postfixCodeGen('typemap', (lex, tok))
         postfixCLR_codeGen('const', (lex, tok))
         numRow += 1
         factor_type = 'int' if tok == 'intnum' else 'float'
+
     elif tok == 'id':
         # Заглядаємо наперед, щоб відрізнити змінну від виклику функції
         if numRow + 1 <= len_tableOfSymb and tableOfSymb[numRow + 1][1] == '(':
+            # Це виклик функції отримуємо тип повернення
             factor_type = parseFunctionCall()
-        else:  # Це просто змінна (r-value)
-            # Правило 3: Перевірка r-value
+        else:
             cxt_found, name, attr = st.findName(lex, st.currentContext, numLine)
             id_type = attr[2]
             id_val_status = attr[3]
 
             # Правило 4: Використання неініціалізованої змінної
-            # if id_val_status == 'undefined':
-            #     st.failSem(f"Використання неініціалізованої змінної '{lex}'", numLine)
+            if id_val_status == 'undefined':
+                st.failSem(f"Використання неініціалізованої змінної '{lex}'", numLine)
 
             print(indent + 'в рядку {0} - токен {1}'.format(numLine, (lex, tok)))
             postfixCodeGen('rval', (lex, tok))
@@ -1152,14 +1166,14 @@ def parseFactor():
 
     elif lex == '(':
         parseToken('(', 'brackets_op')
-        factor_type = parseExpression()  # Тип того, що в дужках
+        factor_type = parseExpression()
         parseToken(')', 'brackets_op')
+
     else:
         failParse('token mismatch', (numLine, lex, tok, 'ident | number | function_call | (arithmexpr)'))
 
     indent = predIndt()
-    return factor_type  # Повертаємо тип
-
+    return factor_type
 
 def parseFunctionCall():
     global numRow
@@ -1500,7 +1514,6 @@ def parseAssign(id_info):
     postfixCLR_codeGen('lval', id_lex)
     parseToken(assign_lex, assign_tok)
 
-
     if toView: configToPrint(id_lex, numRow)
 
     # 4. Перевіряємо, чи це input()
@@ -1509,7 +1522,7 @@ def parseAssign(id_info):
         # Особливий випадок для input()
         parseInput(id_lex, id_type)
         if id_type not in ('int', 'float', 'string'):
-            st.failSem(f"input() can only be assigned to ‘int’, ‘float’, or ‘string’, but not to'{id_type}'",
+            st.failSem(f"input() can only be assigned to 'int', 'float', or 'string', but not to'{id_type}'",
                        assign_line)
         print(f"Semantic: Semantically accepting input() into var of type '{id_type}'")
 
@@ -1517,8 +1530,6 @@ def parseAssign(id_info):
         postfixCLR_codeGen('=', id_type)
         if toView: configToPrint('=', numRow)
 
-        # postfixCodeGen('', ('input', 'func'))
-        # postfixCodeGen('', ('=', 'assign_op'))
     else:
         # 5. Або це звичайний вираз
         expr_type = parseExpression()
@@ -1527,41 +1538,66 @@ def parseAssign(id_info):
             # Просте присвоєння (a = b)
             # (Правила 16, 17)
             st.check_assign(id_type, expr_type, assign_line)
+
+            # Конверсія int->float при присвоєнні
+            if id_type == 'float' and expr_type == 'int':
+                postfixCLR_codeGen('i2f', '')
+                current_rpn_table.append(('i2f', 'conv'))
+
             current_rpn_table.append(('=', 'assign_op'))
             postfixCLR_codeGen('=', id_type)
             if toView: configToPrint(lex, numRow)
+
         elif assign_tok in ('add_ass_op', 'mult_ass_op'):
             # Складне присвоєння (a += b)
-
             op_map = {
                 '+=': '+',
                 '-=': '-',
                 '*=': '*',
                 '/=': '/'
             }
-            # Отримуємо '+', '-', '*' або '/' з лексеми '+='
             arith_op = op_map.get(assign_lex)
 
             if arith_op is None:
                 st.failSem(f"Unaccounted operator  '{assign_lex}'", assign_line)
-                return  # Виходимо, щоб уникнути подальших помилок
+                return
 
             if assign_lex == '/=' and tok in ('intnum', 'floatnum') and float(lex) == 0.0:
                 st.failSem("Division by zero in the /= operator", assign_line)
 
-            # Перевіряємо, чи сама операція (a + b) валідна
-            # (Правила 11, 12, 15)
-            # 'string' * 'string' тут видасть помилку
-            result_type = st.check_arithm_op(id_type, arith_op, expr_type, assign_line)
+            # Перевіряємо операцію з можливою конверсією
+            type_check_result = st.check_arithm_op(id_type, arith_op, expr_type, assign_line)
 
-            # Перевіряємо, чи можна результат присвоїти назад до 'a'
-            # (Правила 16, 17)
-            # Наприклад, a(int) += b(float) дасть result_type 'float'
-            # і check_assign('int', 'float') видасть помилку.
+            # Обробка конверсії для складного присвоєння
+            if isinstance(type_check_result, tuple):
+                result_type, conv = type_check_result
+
+                if conv == 'i2f_r':
+                    postfixCLR_codeGen('i2f', '')
+                    current_rpn_table.append(('i2f', 'conv'))
+                elif conv == 'i2f_l':
+                    postfixCLR_codeGen('i2f_left', '')
+                    current_rpn_table.append(('SWAP', 'stack_op'))
+                    current_rpn_table.append(('i2f', 'conv'))
+                    current_rpn_table.append(('SWAP', 'stack_op'))
+            else:
+                result_type = type_check_result
+
+
             st.check_assign(id_type, result_type, assign_line)
-            # postfixCodeGen('lval', (id_lex, id_tok))  # a
-            # postfixCodeGen('', (arith_op, 'op'))  # +
-            # postfixCodeGen('', ('=', 'assign_op'))  # =
+
+
+            postfixCLR_codeGen(arith_op, arith_op)
+            current_rpn_table.append((arith_op, 'op'))
+
+
+            if id_type == 'float' and result_type == 'int':
+                postfixCLR_codeGen('i2f', '')
+                current_rpn_table.append(('i2f', 'conv'))
+
+            current_rpn_table.append(('=', 'assign_op'))
+            postfixCLR_codeGen('=', id_type)
+
         else:
             st.failSem(f"Unknown assignment operator type '{assign_tok}'", assign_line)
 
@@ -1569,8 +1605,6 @@ def parseAssign(id_info):
     st.updateNameVal(id_lex, st.currentContext, id_line, 'assigned')
 
     indent = predIndt()
-
-
 def parseInput(lex,type):
     global numRow
     indent = nextIndt()
