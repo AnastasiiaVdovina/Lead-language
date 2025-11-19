@@ -63,6 +63,9 @@ type_map = {
     "pow_op": "pow_op"
 }
 
+
+st.tabName['univ']['__temp_f'] = (999, 'var', 'float', 'assigned', '-')
+
 # Program = { Declaration | Statement | Comment } - кореневий нетермінал
 def parseProgram():
     global numRow
@@ -350,16 +353,16 @@ def parseCaseBlock(ident_info, m_end_switch):
     result_type, conv = st.check_rel_op(switch_var_type, '==', case_const_type, numLine_const)
 
     if conv == 'i2f_r':
+
         current_rpn_table.append(('i2f', 'conv'))
-        #postfixCLR_codeGen('i2f', None)
+        postfixCLR_codeGen('i2f', 'conv')
     elif conv == 'i2f_l':
 
         current_rpn_table.append(('SWAP', 'stack_op'))
-        #postfixCLR_codeGen('SWAP', None)
         current_rpn_table.append(('i2f', 'conv'))
-        #postfixCLR_codeGen('i2f', None)
         current_rpn_table.append(('SWAP', 'stack_op'))
-        #postfixCLR_codeGen('SWAP', None)
+
+        postfixCLR_codeGen('i2f_l', 'conv')
 
     postfixCodeGen('typemap', ('==', 'rel_op'))
     postfixCLR_codeGen('rel_op', '==')
@@ -874,11 +877,14 @@ def parseExpression():
 
             if conv == 'i2f_r':
                 current_rpn_table.append(('i2f', 'conv'))
+                postfixCLR_codeGen('i2f', 'conv')
 
             elif conv == 'i2f_l':
                 current_rpn_table.append(('SWAP', 'stack_op'))
                 current_rpn_table.append(('i2f', 'conv'))
                 current_rpn_table.append(('SWAP', 'stack_op'))
+
+                postfixCLR_codeGen('i2f_l', 'conv')
 
             postfixCodeGen("typemap", (op_lex, tok))
             postfixCLR_codeGen("rel_op", op_lex)
@@ -1008,15 +1014,22 @@ def parseArithmExpression(operator_stack=None, operand_stack=None):
                 l_type = type_check_result
             if conv == 'i2f_r':
                 current_rpn_table.append(('i2f', 'conv'))
+                postfixCLR_codeGen('i2f', 'conv')
             elif conv == 'i2f_l':
                 # Конвертуємо лівий операнд (SWAP, i2f, SWAP)
                 current_rpn_table.append(('SWAP', 'stack_op'))
                 current_rpn_table.append(('i2f', 'conv'))
                 current_rpn_table.append(('SWAP', 'stack_op'))
 
+                postfixCLR_codeGen('i2f_l', 'conv')
+
         else:
             break
 
+    while operator_stack and precedence(operator_stack[-1][0]) >= precedence('+'):
+        op = operator_stack.pop()
+        postfixCodeGen('typemap', op)
+        postfixCLR_codeGen(op[0], op[0])
     indent = predIndt()
     return l_type
 
@@ -1055,15 +1068,22 @@ def parseTerm(operator_stack=None, operand_stack=None):
 
             if conv == 'i2f_r':
                 current_rpn_table.append(('i2f', 'conv'))
+                postfixCLR_codeGen('i2f', 'conv')
             elif conv == 'i2f_l':
                 # Конвертуємо лівий операнд (SWAP, i2f, SWAP)
                 current_rpn_table.append(('SWAP', 'stack_op'))
                 current_rpn_table.append(('i2f', 'conv'))
                 current_rpn_table.append(('SWAP', 'stack_op'))
 
+                postfixCLR_codeGen('i2f_l', 'conv')
+
         else:
             break
 
+    while operator_stack and precedence(operator_stack[-1][0]) >= precedence('*'):
+        op = operator_stack.pop()
+        postfixCodeGen('typemap', op)
+        postfixCLR_codeGen(op[0], op[0])
     indent = predIndt()
     return l_type
 
@@ -1104,16 +1124,23 @@ def parsePower(operator_stack=None, operand_stack=None):
             if conv == 'i2f_r':
                 # Конвертуємо правий операнд (який щойно додали в RPN)
                 current_rpn_table.append(('i2f', 'conv'))
+                postfixCLR_codeGen('i2f', 'conv')
             elif conv == 'i2f_l':
                 # Конвертуємо лівий операнд (SWAP, i2f, SWAP)
                 current_rpn_table.append(('SWAP', 'stack_op'))
                 current_rpn_table.append(('i2f', 'conv'))
                 current_rpn_table.append(('SWAP', 'stack_op'))
 
+                postfixCLR_codeGen('i2f_l', 'conv')
+
         else:
             break
 
     indent = predIndt()
+    while operator_stack and precedence(operator_stack[-1][0]) >= precedence('**'):
+        op = operator_stack.pop()
+        postfixCodeGen('pow_op', op)
+        postfixCLR_codeGen("pow_op", op)
     return l_type
 
 def parseFactor():
