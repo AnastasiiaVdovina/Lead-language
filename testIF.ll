@@ -21,7 +21,7 @@ func area(int width, int length) => int {
 }
 
 
-var result: float = area(w, l) * 2
-var result2: float = 2 * area(w, l)+ 1
+var result: float = area(w, l) * 2.0
+var result2: float = 2.0 * area(w, l)+ 1
 print(result)
 print(result2)

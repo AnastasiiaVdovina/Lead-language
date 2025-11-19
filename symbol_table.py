@@ -117,7 +117,6 @@ def check_arithm_op(l_type, op, r_type, line):
             return 'int'  # Цілочисельне ділення
         return 'int'
 
-
     failSem(f"Unknown combination of types for operation ‘{op}’: ‘{l_type}’ and '{r_type}'", line)
     return 'type_error'
 
@@ -180,4 +179,3 @@ def check_return_type(var_type, expr_type, line):
     # Правило 12: bool/string
     if var_type in ('bool', 'string') or expr_type in ('bool', 'string'):
         failSem(f"Expected return type {var_type}, return typed used {expr_type}", line)
-
