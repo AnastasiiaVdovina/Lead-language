@@ -1,12 +1,11 @@
 grammar Lead;
 
-// --- Entry Point ---
 
 program
     : (declaration | statement | functionDeclaration)* EOF
     ;
 
-// --- Declarations ---
+
 
 declaration
     : 'var' identList ':' type ('=' expression)?
@@ -20,9 +19,7 @@ type
     : 'int' | 'float' | 'bool' | 'string'
     ;
 
-// --- Functions ---
 
-// Примітка: Я додав paramList для оголошення, щоб відрізнити його від виклику (ArgList)
 functionDeclaration
     : 'func' IDENTIFIER '(' paramList? ')' ('->' type)? '{' statement* returnStatement? '}'
     ;
@@ -39,7 +36,7 @@ returnStatement
     : 'return' (expression | IDENTIFIER)?
     ;
 
-// --- Statements ---
+
 
 statement
     : assignStatement
@@ -51,7 +48,7 @@ statement
     | ifStatement
     | guardStatement
     | switchStatement
-    | expressionStatement // Дозволяє викликати функції як окремі інструкції
+    | expressionStatement
     ;
 
 assignStatement
@@ -66,7 +63,7 @@ outputStatement
     : 'print' '(' (expression | STRING) ')'
     ;
 
-// Об'єднана логіка для всіх типів If (Simple, Else, Chained)
+
 ifStatement
     : 'if' condition codeBlock
       ('else' 'if' condition codeBlock)* ('else' codeBlock)?
@@ -76,7 +73,7 @@ guardStatement
     : 'guard' '(' condition ')' 'else' '{' statement* '}'
     ;
 
-// Switch structure
+
 switchStatement
     : 'switch' IDENTIFIER '{' caseBlock* defaultBlock? '}'
     ;
@@ -109,9 +106,7 @@ codeBlock
     : '{' statement* '}'
     ;
 
-// --- Expressions ---
 
-// Узагальнений Expression
 expression
     : boolExpression
     | arithmExpression
@@ -119,10 +114,10 @@ expression
 
 condition
     : boolExpression
-    | expression // Дозволяє загальні вирази як умови
+    | expression
     ;
 
-// Boolean Logic
+
 boolExpression
     : boolTerm ('||' boolTerm)*
     ;
@@ -159,7 +154,7 @@ term
 factor
     : IDENTIFIER
     | NUMBER
-    | funcCall         // Додано можливість виклику функції всередині виразу
+    | funcCall
     | '(' arithmExpression ')'
     ;
 
@@ -175,10 +170,7 @@ argList
     : expression (',' expression)*
     ;
 
-// --- Lexer Rules (Tokens) ---
 
-// Keywords definition isn't strictly necessary if defined explicitly in literals above,
-// but good for precedence.
 
 IDENTIFIER
     : [a-zA-Z][a-zA-Z0-9]*
@@ -193,7 +185,7 @@ STRING
     | '\'' .*? '\''
     ;
 
-// Comments: skip them so parser doesn't need to handle them explicitly in grammar
+
 COMMENT
     : '//' ~[\r\n]* -> skip
     ;
@@ -202,7 +194,7 @@ BLOCK_COMMENT
     : '/*' .*? '*/' -> skip
     ;
 
-// Whitespace handling
+
 WS
     : [ \t\r\n]+ -> skip
     ;

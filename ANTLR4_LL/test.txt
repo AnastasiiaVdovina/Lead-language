@@ -1,0 +1,59 @@
+var running: int = 1
+    var choice: int
+    var a: float
+    var b: float
+    var res: float
+
+    print("--- LEAD CALCULATOR ---")
+
+    while (running == 1) {
+        print("")
+        print("Select operation:")
+        print("1. Add (+)")
+        print("2. Subtract (-)")
+        print("3. Multiply (*)")
+        print("4. Divide (/)")
+        print("5. Power (**)")
+        print("0. Exit")
+
+        choice = input()
+
+        if (choice == 0) {
+            print("Exiting...")
+            running = 0
+        }
+
+        if (choice > 0) {
+            if (choice <= 5) {
+                print("Enter first number:")
+                a = input()
+                print("Enter second number:")
+                b = input()
+
+                switch choice {
+                    case 1:
+                        res = a + b
+                        print("Result: ")
+                        print(res)
+                    case 2:
+                        res = a - b
+                        print("Result: ")
+                        print(res)
+                    case 3:
+                        res = a * b
+                        print("Result: ")
+                        print(res)
+                    case 4:
+
+                            res = a / b
+                            print("Result: ")
+                            print(res)
+
+                    case 5:
+                        res = a ** b
+                        print("Result: ")
+                        print(res)
+                }
+            }
+        }
+    }

@@ -1,4 +1,4 @@
-# Generated from C:/Users/vdovi/PycharmProjects/Lead-language/ANTLR4_LL/Lead.g4 by ANTLR 4.13.2
+# Generated from Lead.g4 by ANTLR 4.13.2
 from antlr4 import *
 if "." in __name__:
     from .LeadParser import LeadParser

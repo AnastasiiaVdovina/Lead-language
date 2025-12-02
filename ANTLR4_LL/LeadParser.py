@@ -1,4 +1,4 @@
-# Generated from C:/Users/vdovi/PycharmProjects/Lead-language/ANTLR4_LL/Lead.g4 by ANTLR 4.13.2
+# Generated from Lead.g4 by ANTLR 4.13.2
 # encoding: utf-8
 from antlr4 import *
 from io import StringIO
@@ -310,14 +310,6 @@ class LeadParser ( Parser ):
         def getRuleIndex(self):
             return LeadParser.RULE_program
 
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterProgram" ):
-                listener.enterProgram(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitProgram" ):
-                listener.exitProgram(self)
-
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitProgram" ):
                 return visitor.visitProgram(self)
@@ -393,14 +385,6 @@ class LeadParser ( Parser ):
         def getRuleIndex(self):
             return LeadParser.RULE_declaration
 
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterDeclaration" ):
-                listener.enterDeclaration(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitDeclaration" ):
-                listener.exitDeclaration(self)
-
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitDeclaration" ):
                 return visitor.visitDeclaration(self)
@@ -460,14 +444,6 @@ class LeadParser ( Parser ):
         def getRuleIndex(self):
             return LeadParser.RULE_identList
 
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterIdentList" ):
-                listener.enterIdentList(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitIdentList" ):
-                listener.exitIdentList(self)
-
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitIdentList" ):
                 return visitor.visitIdentList(self)
@@ -517,14 +493,6 @@ class LeadParser ( Parser ):
 
         def getRuleIndex(self):
             return LeadParser.RULE_type
-
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterType" ):
-                listener.enterType(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitType" ):
-                listener.exitType(self)
 
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitType" ):
@@ -589,14 +557,6 @@ class LeadParser ( Parser ):
 
         def getRuleIndex(self):
             return LeadParser.RULE_functionDeclaration
-
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterFunctionDeclaration" ):
-                listener.enterFunctionDeclaration(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitFunctionDeclaration" ):
-                listener.exitFunctionDeclaration(self)
 
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitFunctionDeclaration" ):
@@ -688,14 +648,6 @@ class LeadParser ( Parser ):
         def getRuleIndex(self):
             return LeadParser.RULE_paramList
 
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterParamList" ):
-                listener.enterParamList(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitParamList" ):
-                listener.exitParamList(self)
-
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitParamList" ):
                 return visitor.visitParamList(self)
@@ -752,14 +704,6 @@ class LeadParser ( Parser ):
         def getRuleIndex(self):
             return LeadParser.RULE_param
 
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterParam" ):
-                listener.enterParam(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitParam" ):
-                listener.exitParam(self)
-
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitParam" ):
                 return visitor.visitParam(self)
@@ -806,14 +750,6 @@ class LeadParser ( Parser ):
 
         def getRuleIndex(self):
             return LeadParser.RULE_returnStatement
-
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterReturnStatement" ):
-                listener.enterReturnStatement(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitReturnStatement" ):
-                listener.exitReturnStatement(self)
 
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitReturnStatement" ):
@@ -902,14 +838,6 @@ class LeadParser ( Parser ):
 
         def getRuleIndex(self):
             return LeadParser.RULE_statement
-
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterStatement" ):
-                listener.enterStatement(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitStatement" ):
-                listener.exitStatement(self)
 
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitStatement" ):
@@ -1015,14 +943,6 @@ class LeadParser ( Parser ):
         def getRuleIndex(self):
             return LeadParser.RULE_assignStatement
 
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterAssignStatement" ):
-                listener.enterAssignStatement(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitAssignStatement" ):
-                listener.exitAssignStatement(self)
-
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitAssignStatement" ):
                 return visitor.visitAssignStatement(self)
@@ -1065,14 +985,6 @@ class LeadParser ( Parser ):
 
         def getRuleIndex(self):
             return LeadParser.RULE_inputStatement
-
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterInputStatement" ):
-                listener.enterInputStatement(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitInputStatement" ):
-                listener.exitInputStatement(self)
 
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitInputStatement" ):
@@ -1124,14 +1036,6 @@ class LeadParser ( Parser ):
 
         def getRuleIndex(self):
             return LeadParser.RULE_outputStatement
-
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterOutputStatement" ):
-                listener.enterOutputStatement(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitOutputStatement" ):
-                listener.exitOutputStatement(self)
 
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitOutputStatement" ):
@@ -1200,14 +1104,6 @@ class LeadParser ( Parser ):
 
         def getRuleIndex(self):
             return LeadParser.RULE_ifStatement
-
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterIfStatement" ):
-                listener.enterIfStatement(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitIfStatement" ):
-                listener.exitIfStatement(self)
 
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitIfStatement" ):
@@ -1288,14 +1184,6 @@ class LeadParser ( Parser ):
         def getRuleIndex(self):
             return LeadParser.RULE_guardStatement
 
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterGuardStatement" ):
-                listener.enterGuardStatement(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitGuardStatement" ):
-                listener.exitGuardStatement(self)
-
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitGuardStatement" ):
                 return visitor.visitGuardStatement(self)
@@ -1369,14 +1257,6 @@ class LeadParser ( Parser ):
         def getRuleIndex(self):
             return LeadParser.RULE_switchStatement
 
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterSwitchStatement" ):
-                listener.enterSwitchStatement(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitSwitchStatement" ):
-                listener.exitSwitchStatement(self)
-
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitSwitchStatement" ):
                 return visitor.visitSwitchStatement(self)
@@ -1448,14 +1328,6 @@ class LeadParser ( Parser ):
         def getRuleIndex(self):
             return LeadParser.RULE_caseBlock
 
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterCaseBlock" ):
-                listener.enterCaseBlock(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitCaseBlock" ):
-                listener.exitCaseBlock(self)
-
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitCaseBlock" ):
                 return visitor.visitCaseBlock(self)
@@ -1521,14 +1393,6 @@ class LeadParser ( Parser ):
 
         def getRuleIndex(self):
             return LeadParser.RULE_defaultBlock
-
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterDefaultBlock" ):
-                listener.enterDefaultBlock(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitDefaultBlock" ):
-                listener.exitDefaultBlock(self)
 
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitDefaultBlock" ):
@@ -1597,14 +1461,6 @@ class LeadParser ( Parser ):
 
         def getRuleIndex(self):
             return LeadParser.RULE_forStatement
-
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterForStatement" ):
-                listener.enterForStatement(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitForStatement" ):
-                listener.exitForStatement(self)
 
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitForStatement" ):
@@ -1678,14 +1534,6 @@ class LeadParser ( Parser ):
         def getRuleIndex(self):
             return LeadParser.RULE_whileStatement
 
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterWhileStatement" ):
-                listener.enterWhileStatement(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitWhileStatement" ):
-                listener.exitWhileStatement(self)
-
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitWhileStatement" ):
                 return visitor.visitWhileStatement(self)
@@ -1738,14 +1586,6 @@ class LeadParser ( Parser ):
         def getRuleIndex(self):
             return LeadParser.RULE_repeatWhileStatement
 
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterRepeatWhileStatement" ):
-                listener.enterRepeatWhileStatement(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitRepeatWhileStatement" ):
-                listener.exitRepeatWhileStatement(self)
-
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitRepeatWhileStatement" ):
                 return visitor.visitRepeatWhileStatement(self)
@@ -1792,14 +1632,6 @@ class LeadParser ( Parser ):
         def getRuleIndex(self):
             return LeadParser.RULE_expressionStatement
 
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterExpressionStatement" ):
-                listener.enterExpressionStatement(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitExpressionStatement" ):
-                listener.exitExpressionStatement(self)
-
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitExpressionStatement" ):
                 return visitor.visitExpressionStatement(self)
@@ -1842,14 +1674,6 @@ class LeadParser ( Parser ):
 
         def getRuleIndex(self):
             return LeadParser.RULE_codeBlock
-
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterCodeBlock" ):
-                listener.enterCodeBlock(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitCodeBlock" ):
-                listener.exitCodeBlock(self)
 
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitCodeBlock" ):
@@ -1908,14 +1732,6 @@ class LeadParser ( Parser ):
         def getRuleIndex(self):
             return LeadParser.RULE_expression
 
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterExpression" ):
-                listener.enterExpression(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitExpression" ):
-                listener.exitExpression(self)
-
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitExpression" ):
                 return visitor.visitExpression(self)
@@ -1973,14 +1789,6 @@ class LeadParser ( Parser ):
         def getRuleIndex(self):
             return LeadParser.RULE_condition
 
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterCondition" ):
-                listener.enterCondition(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitCondition" ):
-                listener.exitCondition(self)
-
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitCondition" ):
                 return visitor.visitCondition(self)
@@ -2037,14 +1845,6 @@ class LeadParser ( Parser ):
         def getRuleIndex(self):
             return LeadParser.RULE_boolExpression
 
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterBoolExpression" ):
-                listener.enterBoolExpression(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitBoolExpression" ):
-                listener.exitBoolExpression(self)
-
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitBoolExpression" ):
                 return visitor.visitBoolExpression(self)
@@ -2100,14 +1900,6 @@ class LeadParser ( Parser ):
 
         def getRuleIndex(self):
             return LeadParser.RULE_boolTerm
-
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterBoolTerm" ):
-                listener.enterBoolTerm(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitBoolTerm" ):
-                listener.exitBoolTerm(self)
 
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitBoolTerm" ):
@@ -2169,14 +1961,6 @@ class LeadParser ( Parser ):
 
         def getRuleIndex(self):
             return LeadParser.RULE_boolFactor
-
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterBoolFactor" ):
-                listener.enterBoolFactor(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitBoolFactor" ):
-                listener.exitBoolFactor(self)
 
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitBoolFactor" ):
@@ -2262,14 +2046,6 @@ class LeadParser ( Parser ):
         def getRuleIndex(self):
             return LeadParser.RULE_comparison
 
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterComparison" ):
-                listener.enterComparison(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitComparison" ):
-                listener.exitComparison(self)
-
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitComparison" ):
                 return visitor.visitComparison(self)
@@ -2310,14 +2086,6 @@ class LeadParser ( Parser ):
 
         def getRuleIndex(self):
             return LeadParser.RULE_relOp
-
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterRelOp" ):
-                listener.enterRelOp(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitRelOp" ):
-                listener.exitRelOp(self)
 
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitRelOp" ):
@@ -2371,14 +2139,6 @@ class LeadParser ( Parser ):
 
         def getRuleIndex(self):
             return LeadParser.RULE_arithmExpression
-
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterArithmExpression" ):
-                listener.enterArithmExpression(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitArithmExpression" ):
-                listener.exitArithmExpression(self)
 
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitArithmExpression" ):
@@ -2450,14 +2210,6 @@ class LeadParser ( Parser ):
         def getRuleIndex(self):
             return LeadParser.RULE_term
 
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterTerm" ):
-                listener.enterTerm(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitTerm" ):
-                listener.exitTerm(self)
-
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitTerm" ):
                 return visitor.visitTerm(self)
@@ -2526,14 +2278,6 @@ class LeadParser ( Parser ):
         def getRuleIndex(self):
             return LeadParser.RULE_factor
 
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterFactor" ):
-                listener.enterFactor(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitFactor" ):
-                listener.exitFactor(self)
-
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitFactor" ):
                 return visitor.visitFactor(self)
@@ -2600,14 +2344,6 @@ class LeadParser ( Parser ):
         def getRuleIndex(self):
             return LeadParser.RULE_sign
 
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterSign" ):
-                listener.enterSign(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitSign" ):
-                listener.exitSign(self)
-
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitSign" ):
                 return visitor.visitSign(self)
@@ -2656,14 +2392,6 @@ class LeadParser ( Parser ):
 
         def getRuleIndex(self):
             return LeadParser.RULE_funcCall
-
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterFuncCall" ):
-                listener.enterFuncCall(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitFuncCall" ):
-                listener.exitFuncCall(self)
 
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitFuncCall" ):
@@ -2720,14 +2448,6 @@ class LeadParser ( Parser ):
 
         def getRuleIndex(self):
             return LeadParser.RULE_argList
-
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterArgList" ):
-                listener.enterArgList(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitArgList" ):
-                listener.exitArgList(self)
 
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitArgList" ):
