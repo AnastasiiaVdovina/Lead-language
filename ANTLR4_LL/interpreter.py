@@ -34,6 +34,7 @@ class LeadInterpreter(LeadVisitor):
             f"Semantic Error: Type mismatch for '{var_name}'. Expected {target_type}, got {val_type.__name__}.")
 
 
+
     def visitOutputStatement(self, ctx: LeadParser.OutputStatementContext):
         if ctx.STRING():
 
