@@ -5,11 +5,10 @@ from LeadVisitor import LeadVisitor
 
 class LeadInterpreter(LeadVisitor):
     def __init__(self):
-        self.memory = {}  # Зберігає значення змінних: {'x': 10}
-        self.types = {}  # Зберігає типи змінних: {'x': 'int'}
-        self.constants = set()  # Множина імен констант
+        self.memory = {}
+        self.types = {}
+        self.constants = set()
 
-        # Значення за замовчуванням
         self.defaults = {
             'int': 0,
             'float': 0.0,
@@ -17,7 +16,6 @@ class LeadInterpreter(LeadVisitor):
             'string': ""
         }
 
-    # --- ДОПОМІЖНІ МЕТОДИ ---
     def check_type_compatibility(self, var_name, target_type, value):
         val_type = type(value)
 
@@ -26,11 +24,9 @@ class LeadInterpreter(LeadVisitor):
         if target_type == 'bool' and val_type == bool: return value
         if target_type == 'string' and val_type == str: return value
 
-        # int -> float (OK)
         if target_type == 'float' and val_type == int:
             return float(value)
 
-        # float -> int (ERROR)
         if target_type == 'int' and val_type == float:
             raise TypeError(f"Semantic Error: Implicit conversion from 'float' to 'int' for '{var_name}' is forbidden.")
 
@@ -75,7 +71,6 @@ class LeadInterpreter(LeadVisitor):
             except ValueError:
                 print(f"Invalid input! Variable '{name}' expects type '{target_type}'. Try again.")
 
-    # --- ОГОЛОШЕННЯ ТА ПРИСВОЄННЯ ---
 
     def visitDeclaration(self, ctx: LeadParser.DeclarationContext):
         var_names = [node.getText() for node in ctx.identList().IDENTIFIER()]
@@ -174,7 +169,6 @@ class LeadInterpreter(LeadVisitor):
                 self.visit(stmt)
         return None
 
-    # --- МАТЕМАТИКА ---
 
     def visitTerm(self, ctx: LeadParser.TermContext):
         result = self.visit(ctx.factor(0))
